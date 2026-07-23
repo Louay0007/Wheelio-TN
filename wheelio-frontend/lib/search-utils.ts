@@ -69,7 +69,9 @@ export function rentalDays(pickupDate: string, dropoffDate: string): number {
 }
 
 export function formatTnd(amount: number): string {
-  return `${amount.toLocaleString("fr-TN")} TND`
+  // Prefer en-US grouping so PDF StandardFonts (WinAnsi) never see
+  // fr-TN narrow no-break spaces (U+202F) that crash pdf-lib drawText.
+  return `${Math.round(amount).toLocaleString("en-US")} TND`
 }
 
 export function formatTripDate(date: string): string {

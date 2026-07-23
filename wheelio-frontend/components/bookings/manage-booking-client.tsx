@@ -8,6 +8,7 @@ import {
   MessageCircle,
   PencilLine,
 } from "lucide-react"
+import { ContractDownloads } from "@/components/checkout/contract-downloads"
 import { PageShell } from "@/components/page-shell"
 import {
   estimateRefund,
@@ -326,13 +327,12 @@ export function ManageBookingClient({ bookingId }: ManageBookingClientProps) {
         {/* Docs & support */}
         <section className="border-b border-black/10 py-8 dark:border-white/10">
           <h2 className="text-lg font-semibold">Documents & support</h2>
+          <ContractDownloads
+            bookingId={booking.id}
+            agencyConfirmed={booking.status === "confirmed"}
+            className="mt-4"
+          />
           <div className="mt-4 flex flex-wrap gap-3">
-            <button
-              type="button"
-              className="inline-flex h-11 items-center rounded-[8px] border border-black/20 px-4 text-sm font-semibold dark:border-white/20"
-            >
-              Download voucher (PDF)
-            </button>
             <a
               href={`https://wa.me/21600000000?text=${encodeURIComponent(`Booking ${booking.reference}`)}`}
               className="inline-flex h-11 items-center gap-2 rounded-[8px] border border-black/20 px-4 text-sm font-semibold dark:border-white/20"

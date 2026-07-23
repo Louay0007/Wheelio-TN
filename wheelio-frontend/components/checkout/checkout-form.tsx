@@ -13,7 +13,8 @@ import {
   PenLine,
   Shield,
 } from "lucide-react"
-import { RentalContractDocument } from "@/components/checkout/rental-contract"
+import { ContractPaper } from "@/components/checkout/contract-paper"
+import { saveContractArtifacts } from "@/components/checkout/contract-downloads"
 import { SignaturePad } from "@/components/checkout/signature-pad"
 import { PageShell } from "@/components/page-shell"
 import {
@@ -22,6 +23,15 @@ import {
   type BookingExtraId,
   type PaymentMode,
 } from "@/lib/bookings"
+import {
+  buildContractPayload,
+  type ContractPayload,
+} from "@/lib/contract-document"
+import {
+  generateContractPdfs,
+  logoUrlToPngDataUrl,
+  pdfBytesToBase64,
+} from "@/lib/generate-contract-pdf"
 import { getOfferDetail } from "@/lib/offer-detail"
 import {
   formatTnd,
@@ -114,6 +124,11 @@ export function CheckoutForm() {
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null)
   const [signedAt, setSignedAt] = useState<string | null>(null)
   const [contractAck, setContractAck] = useState(false)
+  const [contractRead, setContractRead] = useState(false)
+  const [contractPayload, setContractPayload] = useState<ContractPayload | null>(
+    null,
+  )
+  const [composingPdf, setComposingPdf] = useState(false)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
 
@@ -171,11 +186,15 @@ export function CheckoutForm() {
       next.signature =
         next.signature || "Confirm you have read and agree to this contract"
     }
+    if (!contractRead) {
+      next.signature =
+        next.signature || "Confirm you have read all articles of the agreement"
+    }
     setErrors(next)
     return Object.keys(next).length === 0
   }
 
-  const goToContract = (event: React.FormEvent) => {
+  const goToContract = async (event: React.FormEvent) => {
     event.preventDefault()
     setSubmitError(null)
     if (hold.expired) {
@@ -186,11 +205,32 @@ export function CheckoutForm() {
       setSubmitError("Fix the highlighted fields, then continue to the contract.")
       return
     }
+    if (!offer) return
+
+    const bookingId = createBookingId(offerId)
+    const payload = await buildContractPayload({
+      offer,
+      trip,
+      bookingId,
+      contactName,
+      contactEmail,
+      contactPhone,
+      driverName,
+      licenseCountry,
+      grandTotalTnd: grandTotal,
+      extrasTotalTnd: extrasTotal,
+      rentalTotalTnd: rentalTotal,
+      depositTnd: depositAtPickup,
+      paymentLabel,
+      customerSignedAtLabel: null,
+      agencyConfirmed: false,
+    })
+    setContractPayload(payload)
     setStep("contract")
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  const finalizeBooking = (event: React.FormEvent) => {
+  const finalizeBooking = async (event: React.FormEvent) => {
     event.preventDefault()
     setSubmitError(null)
     if (hold.expired) {
@@ -198,27 +238,70 @@ export function CheckoutForm() {
       return
     }
     if (!validateContract()) return
-    if (pending) return
+    if (pending || composingPdf || !offer || !signatureDataUrl) return
 
-    startTransition(() => {
-      const bookingId = createBookingId(offerId)
-      const params = new URLSearchParams(searchParams.toString())
-      params.set("offerId", offerId)
-      params.set("payment", paymentMode)
-      params.set("extras", extras.join(","))
-      params.set("signed", "1")
-      if (typeof window !== "undefined" && signatureDataUrl) {
-        try {
-          sessionStorage.setItem(
-            `wheelio-signature-${bookingId}`,
-            signatureDataUrl,
-          )
-        } catch {
-          // quota / private mode — booking still proceeds
-        }
-      }
-      router.push(`/bookings/${bookingId}/confirmation?${params.toString()}`)
-    })
+    setComposingPdf(true)
+    try {
+      const bookingId = contractPayload?.bookingId || createBookingId(offerId)
+      const payload = await buildContractPayload({
+        offer,
+        trip,
+        bookingId,
+        contactName,
+        contactEmail,
+        contactPhone,
+        driverName,
+        licenseCountry,
+        grandTotalTnd: grandTotal,
+        extrasTotalTnd: extrasTotal,
+        rentalTotalTnd: rentalTotal,
+        depositTnd: depositAtPickup,
+        paymentLabel,
+        customerSignedAtLabel: signedAt,
+        agencyConfirmed: offer.confirmation === "instant",
+        agencySignedAtLabel:
+          offer.confirmation === "instant" ? signedAt : null,
+      })
+
+      const agencyLogoPng = await logoUrlToPngDataUrl(offer.agency.logo)
+      const wheelioLogoPng = await logoUrlToPngDataUrl(
+        "/logos/wheelio-icon.png",
+        128,
+      )
+      const { customerPdf, agencyPdf } = await generateContractPdfs({
+        payload,
+        customerSignaturePng: signatureDataUrl,
+        agencyLogoPng,
+        wheelioLogoPng,
+      })
+
+      saveContractArtifacts({
+        payload,
+        customerSignaturePng: signatureDataUrl,
+        agencyLogoUrl: offer.agency.logo,
+        customerPdfBase64: pdfBytesToBase64(customerPdf),
+        agencyPdfBase64: pdfBytesToBase64(agencyPdf),
+      })
+
+      startTransition(() => {
+        const params = new URLSearchParams(searchParams.toString())
+        params.set("offerId", offerId)
+        params.set("payment", paymentMode)
+        params.set("extras", extras.join(","))
+        params.set("signed", "1")
+        params.set("contractId", payload.contractId)
+        router.push(`/bookings/${bookingId}/confirmation?${params.toString()}`)
+      })
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown PDF composition error"
+      console.error("[wheelio-contract]", error)
+      setSubmitError(
+        `Could not compose the PDF agreement (${message}). Clear the signature and try again.`,
+      )
+    } finally {
+      setComposingPdf(false)
+    }
   }
 
   if (!offer) {
@@ -779,46 +862,96 @@ export function CheckoutForm() {
                   Back to details
                 </button>
 
-                <RentalContractDocument
-                  offer={offer}
-                  trip={trip}
-                  driverName={driverName}
-                  contactName={contactName}
-                  contactEmail={contactEmail}
-                  contactPhone={contactPhone}
-                  grandTotalTnd={grandTotal}
-                  depositTnd={depositAtPickup}
-                  paymentLabel={paymentLabel}
-                  signedAt={signedAt}
+                <ContractPaper
+                  payload={
+                    contractPayload ?? {
+                      contractId: "…",
+                      bookingId: createBookingId(offerId),
+                      issuedAtIso: new Date().toISOString(),
+                      issuedAtLabel: "…",
+                      hash: "…………",
+                      verifyUrl: `/bookings/${createBookingId(offerId)}`,
+                      parties: {
+                        marketplace: "Wheelio TN",
+                        agencyName: offer.agency.name,
+                        agencyCity: offer.agency.city,
+                        customerName: contactName,
+                        customerEmail: contactEmail,
+                        customerPhone: contactPhone,
+                        driverName,
+                        licenseCountry,
+                      },
+                      vehicle: {
+                        modelName: offer.modelName,
+                        orSimilar: offer.orSimilar,
+                        categoryLabel: offer.categoryLabel,
+                        seats: offer.seats,
+                        bags: offer.bags,
+                        transmission:
+                          offer.transmission === "automatic"
+                            ? "Automatic"
+                            : "Manual",
+                        fuel: offer.fuel,
+                      },
+                      trip: {
+                        pickupLocation: trip.pickupLocation,
+                        dropoffLocation: trip.dropoffLocation,
+                        pickupLabel: "",
+                        dropoffLabel: "",
+                        days,
+                        pickupMethodNote: offer.pickupMethodNote,
+                      },
+                      priceRows: [],
+                      grandTotalTnd: grandTotal,
+                      depositTnd: depositAtPickup,
+                      paymentLabel,
+                      cancellationNote: offer.cancellationNote,
+                      fuelPolicy: offer.fuelPolicy,
+                      mileageNote: offer.mileageNote,
+                      protectionExcluded: offer.protectionExcluded,
+                      documents: offer.documents,
+                      articles: [],
+                      customerSignedAtLabel: signedAt,
+                      agencyConfirmed: false,
+                      agencySignedAtLabel: null,
+                    }
+                  }
                   signatureDataUrl={signatureDataUrl}
+                  agencyLogoUrl={offer.agency.logo}
+                  highlightCustomerPad={!signatureDataUrl}
                 />
 
-                <section className="space-y-3 rounded-[12px] border border-black/15 p-4 dark:border-white/15 sm:p-5">
+                <section className="space-y-3 rounded-[12px] border border-black/15 bg-white p-4 dark:border-white/15 dark:bg-zinc-950 sm:p-5">
                   <div className="flex items-center gap-2">
                     <PenLine className="size-4" />
                     <h2 className="text-lg font-semibold tracking-[-0.02em]">
-                      Your signature
+                      Sign on the agreement
                     </h2>
                   </div>
                   <p className="text-sm text-black/55 dark:text-white/55">
-                    Sign as <strong>{driverName || contactName || "the main driver"}</strong>.
-                    Use a mouse on computer, or your finger on phone.
+                    Sign as{" "}
+                    <strong>{driverName || contactName || "the main driver"}</strong>
+                    . Your signature is embedded into both Customer and Agency
+                    PDFs before payment.
                   </p>
                   <SignaturePad
                     onChange={(data) => {
                       setSignatureDataUrl(data)
-                      if (data) {
-                        setSignedAt(
-                          new Date().toLocaleString("en-GB", {
+                      const label = data
+                        ? new Date().toLocaleString("en-GB", {
                             day: "2-digit",
                             month: "short",
                             year: "numeric",
                             hour: "2-digit",
                             minute: "2-digit",
-                          }),
-                        )
-                      } else {
-                        setSignedAt(null)
+                          })
+                        : null
+                      setSignedAt(label)
+                      if (contractPayload) {
+                        setContractPayload({
+                          ...contractPayload,
+                          customerSignedAtLabel: label,
+                        })
                       }
                     }}
                   />
@@ -831,13 +964,21 @@ export function CheckoutForm() {
                   <label className="flex cursor-pointer items-start gap-3 text-sm">
                     <input
                       type="checkbox"
+                      checked={contractRead}
+                      onChange={(e) => setContractRead(e.target.checked)}
+                      className="mt-1 size-4 rounded border-black/25 accent-black dark:accent-white"
+                    />
+                    <span>I have read all articles of this rental agreement.</span>
+                  </label>
+                  <label className="flex cursor-pointer items-start gap-3 text-sm">
+                    <input
+                      type="checkbox"
                       checked={contractAck}
                       onChange={(e) => setContractAck(e.target.checked)}
                       className="mt-1 size-4 rounded border-black/25 accent-black dark:accent-white"
                     />
                     <span>
-                      I have read this rental booking agreement and my signature
-                      confirms it before{" "}
+                      My electronic signature confirms this contract before{" "}
                       {paymentMode === "deposit_online"
                         ? "online payment"
                         : "sending the booking"}
@@ -854,13 +995,13 @@ export function CheckoutForm() {
 
                 <button
                   type="submit"
-                  disabled={pending || hold.expired}
+                  disabled={pending || composingPdf || hold.expired}
                   className="hidden h-12 w-full items-center justify-center gap-2 rounded-[8px] bg-black text-sm font-semibold text-white transition enabled:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-black dark:enabled:hover:bg-zinc-200 lg:inline-flex"
                 >
-                  {pending ? (
+                  {composingPdf || pending ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
-                      Submitting…
+                      {composingPdf ? "Composing agreement…" : "Submitting…"}
                     </>
                   ) : paymentMode === "deposit_online" ? (
                     "Sign & continue to payment"
@@ -882,7 +1023,8 @@ export function CheckoutForm() {
               <div className="mt-4">{summaryBlock}</div>
               <p className="mt-4 flex items-start gap-2 text-xs text-black/45 dark:text-white/45">
                 <Shield className="mt-0.5 size-3.5 shrink-0" />
-                Contract signature is required before payment or confirmation.
+                Contract signature is required. Dual PDFs are composed after you
+                sign.
               </p>
             </div>
           </aside>
@@ -906,10 +1048,10 @@ export function CheckoutForm() {
           <button
             type="submit"
             form="checkout-form"
-            disabled={pending || hold.expired}
+            disabled={pending || composingPdf || hold.expired}
             className="inline-flex h-12 shrink-0 items-center justify-center rounded-[8px] bg-black px-5 text-sm font-semibold text-white disabled:opacity-40 dark:bg-white dark:text-black"
           >
-            {pending
+            {composingPdf || pending
               ? "…"
               : step === "details"
                 ? "Contract"

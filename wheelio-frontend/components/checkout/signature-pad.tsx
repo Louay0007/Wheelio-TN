@@ -18,6 +18,7 @@ type SignaturePadProps = {
 
 /**
  * Pointer-based signature pad: mouse on desktop, finger/stylus on mobile.
+ * Always draws black ink on a light pad so the PNG embeds correctly in PDFs.
  */
 export function SignaturePad({
   onChange,
@@ -28,16 +29,6 @@ export function SignaturePad({
   const drawing = useRef(false)
   const last = useRef<{ x: number; y: number } | null>(null)
   const [hasInk, setHasInk] = useState(false)
-  const [isDark, setIsDark] = useState(false)
-
-  useEffect(() => {
-    const root = document.documentElement
-    const sync = () => setIsDark(root.classList.contains("dark"))
-    sync()
-    const observer = new MutationObserver(sync)
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] })
-    return () => observer.disconnect()
-  }, [])
 
   const resizeCanvas = useCallback(() => {
     const canvas = canvasRef.current
@@ -58,8 +49,7 @@ export function SignaturePad({
     ctx.lineCap = "round"
     ctx.lineJoin = "round"
     ctx.lineWidth = 2.25
-    ctx.strokeStyle = isDark ? "#fafafa" : "#0a0a0a"
-    // Restore previous strokes after resize when possible
+    ctx.strokeStyle = "#0a0a0a"
     if (hasInk && prev.startsWith("data:")) {
       const img = new Image()
       img.onload = () => {
@@ -67,21 +57,13 @@ export function SignaturePad({
       }
       img.src = prev
     }
-  }, [hasInk, isDark])
+  }, [hasInk])
 
   useEffect(() => {
     resizeCanvas()
     window.addEventListener("resize", resizeCanvas)
     return () => window.removeEventListener("resize", resizeCanvas)
   }, [resizeCanvas])
-
-  useEffect(() => {
-    // Redraw stroke color when theme flips
-    const canvas = canvasRef.current
-    const ctx = canvas?.getContext("2d")
-    if (!ctx) return
-    ctx.strokeStyle = isDark ? "#fafafa" : "#0a0a0a"
-  }, [isDark])
 
   const pointFromEvent = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
@@ -107,6 +89,7 @@ export function SignaturePad({
     canvas.setPointerCapture(event.pointerId)
     drawing.current = true
     last.current = pointFromEvent(event)
+    ctx.strokeStyle = "#0a0a0a"
     ctx.beginPath()
     ctx.moveTo(last.current.x, last.current.y)
     ctx.lineTo(last.current.x + 0.01, last.current.y + 0.01)
@@ -149,10 +132,10 @@ export function SignaturePad({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <div className="relative overflow-hidden rounded-[10px] border border-black/15 bg-white dark:border-white/15 dark:bg-zinc-950">
+      <div className="relative overflow-hidden rounded-[10px] border border-black/15 bg-[#fcfcfa]">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-6 bottom-8 border-b border-dashed border-black/20 dark:border-white/20"
+          className="pointer-events-none absolute inset-x-6 bottom-8 border-b border-dashed border-black/20"
         />
         <canvas
           ref={canvasRef}
@@ -169,7 +152,7 @@ export function SignaturePad({
           aria-label="Signature pad. Draw your signature with mouse or finger."
         />
         {!hasInk ? (
-          <p className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-black/35 dark:text-white/35">
+          <p className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-black/35">
             Sign here · mouse on desktop · finger on phone
           </p>
         ) : null}

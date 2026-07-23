@@ -6,8 +6,8 @@ import {
   Check,
   Mail,
   MessageCircle,
-  Printer,
 } from "lucide-react"
+import { ContractDownloads } from "@/components/checkout/contract-downloads"
 import { PageShell } from "@/components/page-shell"
 import { getDemoBooking, statusLabel } from "@/lib/bookings"
 import { getOfferDetail } from "@/lib/offer-detail"
@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils"
 
 type PageProps = {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ signed?: string }>
+  searchParams: Promise<{ signed?: string; contractId?: string }>
 }
 
 export async function generateMetadata({
@@ -36,7 +36,7 @@ export default async function ConfirmationPage({
   searchParams,
 }: PageProps) {
   const { id } = await params
-  const { signed } = await searchParams
+  const { signed, contractId } = await searchParams
   const booking = getDemoBooking(id)
   if (!booking) {
     return (
@@ -169,6 +169,19 @@ export default async function ConfirmationPage({
           ) : null}
         </section>
 
+        <section className="border-b border-black/10 py-8 dark:border-white/10">
+          <ContractDownloads
+            bookingId={booking.id}
+            contractId={contractId}
+            agencyConfirmed={booking.status === "confirmed"}
+          />
+          {signed === "1" ? (
+            <p className="mt-3 text-xs text-black/45 dark:text-white/45">
+              Your handwritten signature is embedded in both PDF copies.
+            </p>
+          ) : null}
+        </section>
+
         <section className="flex flex-col gap-3 py-8 sm:flex-row sm:flex-wrap">
           <Link
             href={`/bookings/${booking.id}`}
@@ -176,13 +189,6 @@ export default async function ConfirmationPage({
           >
             Manage booking
           </Link>
-          <button
-            type="button"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-[8px] border border-black/20 px-5 text-sm font-semibold dark:border-white/20"
-          >
-            <Printer className="size-4" />
-            Print voucher
-          </button>
           <a
             href={`https://wa.me/21600000000?text=${encodeURIComponent(`Hi Wheelio, booking ${booking.reference}`)}`}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-[8px] border border-black/20 px-5 text-sm font-semibold dark:border-white/20"

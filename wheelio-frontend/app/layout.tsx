@@ -1,11 +1,15 @@
 import React from "react"
 import type { Metadata } from 'next'
-import { Host_Grotesk, Geist, Geist_Mono } from 'next/font/google'
+import { Host_Grotesk, EB_Garamond } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
 const hostGrotesk = Host_Grotesk({ subsets: ["latin"], variable: "--font-host-grotesk" });
+const contractSerif = EB_Garamond({
+  subsets: ["latin"],
+  variable: "--font-contract-serif",
+})
 
 export const metadata: Metadata = {
   title: 'Wheelio | Compare rental cars in Tunisia',
@@ -36,7 +40,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${hostGrotesk.variable} font-sans antialiased`}>
+      <body className={`${hostGrotesk.variable} ${contractSerif.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
