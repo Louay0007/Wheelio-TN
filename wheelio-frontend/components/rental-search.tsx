@@ -10,7 +10,10 @@ import {
   UserRound,
 } from "lucide-react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { tripToSearchParams } from "@/lib/search-utils"
+import type { TripQuery } from "@/lib/search-types"
 
 const locations = [
   "Tunis-Carthage Airport",
@@ -75,6 +78,7 @@ function FieldShell({ children, icon, label }: FieldShellProps) {
 }
 
 export function RentalSearch() {
+  const router = useRouter()
   const [differentReturn, setDifferentReturn] = useState(false)
   const [pickupDate, setPickupDate] = useState(initialDates.pickup)
   const [dropoffDate, setDropoffDate] = useState(initialDates.dropoff)
@@ -93,7 +97,26 @@ export function RentalSearch() {
       <div className="relative mx-auto max-w-7xl lg:min-h-[520px] lg:py-10">
         <form
           className="relative z-10 overflow-hidden rounded-[18px] border border-black bg-white text-black shadow-[0_28px_80px_rgba(0,0,0,0.1)] transition-colors dark:border-white dark:bg-black dark:text-white dark:shadow-[0_28px_80px_rgba(255,255,255,0.06)] lg:w-[72%]"
-          onSubmit={(event) => event.preventDefault()}
+          onSubmit={(event) => {
+            event.preventDefault()
+            const form = new FormData(event.currentTarget)
+            const pickupLocation = String(
+              form.get("pickupLocation") || "Tunis-Carthage Airport",
+            )
+            const trip: TripQuery = {
+              pickupLocation,
+              dropoffLocation: differentReturn
+                ? String(form.get("dropoffLocation") || pickupLocation)
+                : pickupLocation,
+              pickupDate: String(form.get("pickupDate") || pickupDate),
+              pickupTime: String(form.get("pickupTime") || "10:00"),
+              dropoffDate: String(form.get("dropoffDate") || dropoffDate),
+              dropoffTime: String(form.get("dropoffTime") || "10:00"),
+              driverAge: String(form.get("driverAge") || "30"),
+              differentReturn,
+            }
+            router.push(`/search?${tripToSearchParams(trip).toString()}`)
+          }}
         >
           <div className="flex flex-col gap-5 border-b border-black/10 px-5 py-6 dark:border-white/10 sm:px-7 md:flex-row md:items-end md:justify-between md:px-9 md:py-7">
             <div>

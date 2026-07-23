@@ -13,37 +13,37 @@ const footerGroups = [
   {
     title: "Explore",
     links: [
-      { label: "Search rental cars", href: "#search" },
-      { label: "How it works", href: "#about" },
-      { label: "Rental locations", href: "#search" },
-      { label: "Customer reviews", href: "#testimonials" },
+      { label: "Search rental cars", href: "/#search" },
+      { label: "How it works", href: "/how-it-works" },
+      { label: "Rental locations", href: "/locations" },
+      { label: "Customer reviews", href: "/reviews" },
     ],
   },
   {
     title: "For agencies",
     links: [
       { label: "List your agency", href: "mailto:partners@wheelio.tn" },
-      { label: "Partner standards", href: "#partners" },
-      { label: "Agency resources", href: "#partners" },
-      { label: "Agency portal", href: "#portal" },
+      { label: "Partner standards", href: "mailto:partners@wheelio.tn" },
+      { label: "Agency resources", href: "mailto:partners@wheelio.tn" },
+      { label: "Agency portal", href: "mailto:partners@wheelio.tn" },
     ],
   },
   {
     title: "Support",
     links: [
-      { label: "Help centre", href: "#help" },
-      { label: "Manage a booking", href: "#booking" },
-      { label: "Cancellation policy", href: "#cancellation" },
-      { label: "Contact support", href: "mailto:support@wheelio.tn" },
+      { label: "Help centre", href: "/help" },
+      { label: "FAQ", href: "/faq" },
+      { label: "Manage a booking", href: "/account" },
+      { label: "Contact support", href: "/contact" },
     ],
   },
   {
     title: "Legal",
     links: [
-      { label: "Terms of service", href: "#terms" },
-      { label: "Privacy policy", href: "#privacy" },
-      { label: "Cookie policy", href: "#cookies" },
-      { label: "Agency terms", href: "#agency-terms" },
+      { label: "Terms of service", href: "/terms" },
+      { label: "Privacy policy", href: "/privacy" },
+      { label: "Cookie policy", href: "/cookies" },
+      { label: "Cancellation policy", href: "/cancellation-policy" },
     ],
   },
 ]
@@ -70,7 +70,7 @@ export function Footer() {
 
           <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
             <Link
-              href="#search"
+              href="/#search"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-[7px] bg-black px-6 text-sm font-semibold text-white transition hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:focus-visible:outline-white"
             >
               Search cars

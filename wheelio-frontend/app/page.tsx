@@ -2,6 +2,7 @@ import { Footer } from "@/components/footer";
 import { Hero } from "@/components/hero";
 import { LogoSection } from "@/components/logo-section";
 import { RentalSearch } from "@/components/rental-search";
+import TestimonialsSection from "@/components/ui/testimonial-v2";
 
 export default function Home() {
   return (
@@ -9,6 +10,7 @@ export default function Home() {
       <Hero />
       <LogoSection />
       <RentalSearch />
+      <TestimonialsSection />
       <Footer />
     </main>
   );
