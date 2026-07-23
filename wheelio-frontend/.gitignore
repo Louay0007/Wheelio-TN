@@ -1,0 +1,40 @@
+# dependencies
+node_modules
+.pnpm-store
+
+# next.js
+.next
+out
+build
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env
+.env
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# OS
+.DS_Store
+Thumbs.db
+
+# local large source assets not needed at runtime
+public/images/wheelio-full.png
+public/logos/wheelio_tn_black_on_white.png
+public/logos/wheelio_tn_white_on_black.png
+public/logos/wheelio_tn_shape_only (2).png
+public/logos/wheelio-shape.png
+public/logos/wheelio-header.webp
+public/logos/wheelio-header-shape.png
+public/images/solution-*.png
+public/images/hero-bg.jpg
