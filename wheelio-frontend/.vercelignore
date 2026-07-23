@@ -1,0 +1,14 @@
+node_modules
+.next
+.pnpm-store
+*.tsbuildinfo
+next-env.d.ts
+public/images/wheelio-full.png
+public/logos/wheelio_tn_black_on_white.png
+public/logos/wheelio_tn_white_on_black.png
+public/logos/wheelio_tn_shape_only (2).png
+public/logos/wheelio-shape.png
+public/logos/wheelio-header.webp
+public/logos/wheelio-header-shape.png
+public/images/solution-*.png
+public/images/hero-bg.jpg
