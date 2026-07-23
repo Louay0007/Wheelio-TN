@@ -25,7 +25,7 @@ export function LogoCloud({ className, ...props }: LogoCloudProps) {
   return (
     <div
       className={cn(
-        "group relative w-full overflow-hidden border-y border-zinc-700/30",
+        "group relative w-full overflow-hidden border-y border-black/10 dark:border-zinc-700/30",
         className
       )}
       {...props}
@@ -39,8 +39,8 @@ export function LogoCloud({ className, ...props }: LogoCloudProps) {
           </div>
         ))}
       </div>
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-zinc-900 via-zinc-900/90 to-transparent md:w-40" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-zinc-900 via-zinc-900/90 to-transparent md:w-40" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-white via-white/90 to-transparent dark:from-zinc-900 dark:via-zinc-900/90 md:w-40" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-white via-white/90 to-transparent dark:from-zinc-900 dark:via-zinc-900/90 md:w-40" />
     </div>
   );
 }
@@ -53,14 +53,14 @@ function LogoCard({ logo, className, ...props }: LogoCardProps) {
   return (
     <div
       className={cn(
-        "flex h-24 w-48 shrink-0 items-center justify-center border-r border-zinc-700/30 bg-zinc-900 px-8 md:w-56",
+        "flex h-24 w-48 shrink-0 items-center justify-center border-r border-black/10 bg-white px-8 transition-colors dark:border-zinc-700/30 dark:bg-zinc-900 md:w-56",
         className
       )}
       {...props}
     >
       <img
         alt={logo.alt}
-        className="pointer-events-none h-4 select-none md:h-5 brightness-0 invert"
+        className="pointer-events-none h-4 select-none brightness-0 dark:invert md:h-5"
         height={logo.height || "auto"}
         src={logo.src || "/placeholder.svg"}
         width={logo.width || "auto"}
