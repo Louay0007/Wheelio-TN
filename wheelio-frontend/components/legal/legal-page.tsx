@@ -1,14 +1,21 @@
 import Link from "next/link"
-import type { LegalDocument } from "@/lib/legal"
 import { PageHero, PageShell } from "@/components/page-shell"
+import type { LegalContentDocument } from "@/lib/contracts/content"
+import type { AppLocaleDto } from "@/lib/contracts/common"
 
-export function LegalPage({ doc }: { doc: LegalDocument }) {
+export function LegalPage({
+  doc,
+  locale = "en",
+}: {
+  doc: LegalContentDocument
+  locale?: AppLocaleDto
+}) {
   return (
     <PageShell>
       <PageHero
         eyebrow="Legal"
         title={doc.title}
-        description={`Last updated ${formatDate(doc.lastUpdated)}. Official English draft — translations may follow.`}
+        description={`Last updated ${formatDate(doc.lastUpdated, locale)}. Official English draft — translations may follow.`}
       />
 
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:py-14">
@@ -42,7 +49,7 @@ export function LegalPage({ doc }: { doc: LegalDocument }) {
               <section
                 key={section.id}
                 id={section.id}
-                className="scroll-mt-28 border-t border-black/10 pt-8 dark:border-white/10"
+                className="scroll-mt-28 pt-8"
               >
                 <h2 className="text-xl font-semibold tracking-[-0.03em]">
                   {section.title}
@@ -56,22 +63,22 @@ export function LegalPage({ doc }: { doc: LegalDocument }) {
             ))}
           </div>
 
-          <p className="mt-12 border-t border-black/10 pt-6 text-sm text-black/45 dark:border-white/10 dark:text-white/45">
+          <p className="mt-12 pt-6 text-sm text-black/45 dark:text-white/45">
             Related:{" "}
-            <Link href="/terms" className="underline-offset-2 hover:underline">
+            <Link href={`/terms?locale=${locale}`} className="underline-offset-2 hover:underline">
               Terms
             </Link>
             {" · "}
-            <Link href="/privacy" className="underline-offset-2 hover:underline">
+            <Link href={`/privacy?locale=${locale}`} className="underline-offset-2 hover:underline">
               Privacy
             </Link>
             {" · "}
-            <Link href="/cookies" className="underline-offset-2 hover:underline">
+            <Link href={`/cookies?locale=${locale}`} className="underline-offset-2 hover:underline">
               Cookies
             </Link>
             {" · "}
             <Link
-              href="/cancellation-policy"
+              href={`/cancellation-policy?locale=${locale}`}
               className="underline-offset-2 hover:underline"
             >
               Cancellation
@@ -87,8 +94,8 @@ export function LegalPage({ doc }: { doc: LegalDocument }) {
   )
 }
 
-function formatDate(iso: string) {
-  return new Date(iso + "T12:00:00").toLocaleDateString("en-GB", {
+function formatDate(iso: string, locale: AppLocaleDto) {
+  return new Date(iso + "T12:00:00").toLocaleDateString(locale === "fr" ? "fr-FR" : "en-GB", {
     day: "numeric",
     month: "long",
     year: "numeric",

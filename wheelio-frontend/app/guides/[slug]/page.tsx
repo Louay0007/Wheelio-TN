@@ -3,23 +3,32 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ArrowUpRight } from "lucide-react"
 import { PageHero, PageShell } from "@/components/page-shell"
-import { getGuide, GUIDES, listGuideSlugs } from "@/lib/guides"
+import {
+  guideArticleSchema,
+  parseStructuredContent,
+} from "@/lib/contracts/content"
+import { getRequestLocale } from "@/lib/i18n/server"
+import {
+  getTypedContent,
+  listTypedContent,
+} from "@/server/modules/reviews-content/application/get-typed-content"
 
 type PageProps = {
   params: Promise<{ slug: string }>
-}
-
-export function generateStaticParams() {
-  return listGuideSlugs().map((slug) => ({ slug }))
+  searchParams: Promise<{ locale?: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
-  const guide = getGuide(slug)
-  if (!guide) return { title: "Guide | Wheelio" }
-  return {
-    title: `${guide.title} | Wheelio TN`,
-    description: guide.description,
+  try {
+    const content = await getTypedContent("guide", slug, "en")
+    const guide = parseStructuredContent(content, guideArticleSchema)
+    return {
+      title: `${guide.title} | Wheelio TN`,
+      description: guide.description,
+    }
+  } catch {
+    return { title: "Guide | Wheelio" }
   }
 }
 
@@ -39,12 +48,27 @@ function SearchCta({ title, body }: { title: string; body: string }) {
   )
 }
 
-export default async function GuideArticlePage({ params }: PageProps) {
+export default async function GuideArticlePage({
+  params,
+  searchParams,
+}: PageProps) {
   const { slug } = await params
-  const guide = getGuide(slug)
-  if (!guide) notFound()
-
-  const others = GUIDES.filter((g) => g.slug !== guide.slug).slice(0, 3)
+  const locale = await getRequestLocale((await searchParams).locale)
+  let contentPayload
+  try {
+    contentPayload = await Promise.all([
+      getTypedContent("guide", slug, locale),
+      listTypedContent("guide", locale),
+    ])
+  } catch {
+    notFound()
+  }
+  const [content, allContent] = contentPayload
+  const guide = parseStructuredContent(content, guideArticleSchema)
+  const guides = allContent.map((item) =>
+    parseStructuredContent(item, guideArticleSchema),
+  )
+  const others = guides.filter((item) => item.slug !== guide.slug).slice(0, 3)
 
   return (
     <PageShell>
@@ -93,7 +117,7 @@ export default async function GuideArticlePage({ params }: PageProps) {
           body="Browse Tunisian agencies with clear TND totals, deposits shown separately, and instant vs request labels."
         />
 
-        <div className="border-t border-black/10 pt-8 dark:border-white/10">
+        <div className="pt-8 dark:border-white/10">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-black/45 dark:text-white/45">
             More guides
           </p>
@@ -101,7 +125,7 @@ export default async function GuideArticlePage({ params }: PageProps) {
             {others.map((g) => (
               <li key={g.slug}>
                 <Link
-                  href={`/guides/${g.slug}`}
+                  href={`/guides/${g.slug}?locale=${locale}`}
                   className="text-sm font-medium underline-offset-4 hover:underline"
                 >
                   {g.title}
@@ -110,7 +134,7 @@ export default async function GuideArticlePage({ params }: PageProps) {
             ))}
             <li>
               <Link
-                href="/guides"
+                href={`/guides?locale=${locale}`}
                 className="text-sm font-medium underline-offset-4 hover:underline"
               >
                 All guides

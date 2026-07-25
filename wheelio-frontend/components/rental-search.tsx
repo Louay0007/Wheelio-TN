@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { tripToSearchParams } from "@/lib/search-utils"
 import type { TripQuery } from "@/lib/search-types"
+import { useLocale } from "@/lib/i18n/locale"
 
 const locations = [
   "Tunis-Carthage Airport",
@@ -79,6 +80,7 @@ function FieldShell({ children, icon, label }: FieldShellProps) {
 
 export function RentalSearch() {
   const router = useRouter()
+  const { tx } = useLocale()
   const [differentReturn, setDifferentReturn] = useState(false)
   const [pickupDate, setPickupDate] = useState(initialDates.pickup)
   const [dropoffDate, setDropoffDate] = useState(initialDates.dropoff)
@@ -118,16 +120,16 @@ export function RentalSearch() {
             router.push(`/search?${tripToSearchParams(trip).toString()}`)
           }}
         >
-          <div className="flex flex-col gap-5 border-b border-black/10 px-5 py-6 dark:border-white/10 sm:px-7 md:flex-row md:items-end md:justify-between md:px-9 md:py-7">
+          <div className="flex flex-col gap-5 px-5 py-6 sm:px-7 md:flex-row md:items-end md:justify-between md:px-9 md:py-7">
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-black/45 dark:text-white/45">
-                Search all partners
+                {tx("Search all partners")}
               </p>
               <h2
                 id="rental-search-title"
                 className="text-2xl font-medium tracking-[-0.03em] sm:text-3xl"
               >
-                Make your trip
+                {tx("Make your trip")}
               </h2>
             </div>
 
@@ -147,14 +149,14 @@ export function RentalSearch() {
                   }`}
                 />
               </span>
-              Return to a different location
+              {tx("Return to a different location")}
             </label>
           </div>
 
           <div className="grid gap-5 px-5 py-6 sm:px-7 md:grid-cols-12 md:px-9 md:py-8">
             <div className={differentReturn ? "md:col-span-6" : "md:col-span-12"}>
               <FieldShell
-                label="Pick-up location"
+                label={tx("Pick-up location")}
                 icon={<MapPin className={fieldIconClassName} />}
               >
                 <select
@@ -178,7 +180,7 @@ export function RentalSearch() {
             {differentReturn && (
               <div className="md:col-span-6">
                 <FieldShell
-                  label="Drop-off location"
+                  label={tx("Drop-off location")}
                   icon={<MapPin className={fieldIconClassName} />}
                 >
                   <select
@@ -202,7 +204,7 @@ export function RentalSearch() {
 
             <div className="sm:col-span-6 md:col-span-3">
               <FieldShell
-                label="Pick-up date"
+                label={tx("Pick-up date")}
                 icon={<CalendarDays className={fieldIconClassName} />}
               >
                 <input
@@ -224,7 +226,7 @@ export function RentalSearch() {
 
             <div className="sm:col-span-6 md:col-span-2">
               <FieldShell
-                label="Pick-up time"
+                label={tx("Pick-up time")}
                 icon={<Clock3 className={fieldIconClassName} />}
               >
                 <select
@@ -247,7 +249,7 @@ export function RentalSearch() {
 
             <div className="sm:col-span-6 md:col-span-3">
               <FieldShell
-                label="Drop-off date"
+                label={tx("Drop-off date")}
                 icon={<CalendarDays className={fieldIconClassName} />}
               >
                 <input
@@ -264,7 +266,7 @@ export function RentalSearch() {
 
             <div className="sm:col-span-6 md:col-span-2">
               <FieldShell
-                label="Drop-off time"
+                label={tx("Drop-off time")}
                 icon={<Clock3 className={fieldIconClassName} />}
               >
                 <select
@@ -287,7 +289,7 @@ export function RentalSearch() {
 
             <div className="sm:col-span-6 md:col-span-2">
               <FieldShell
-                label="Driver age"
+                label={tx("Driver age")}
                 icon={<UserRound className={fieldIconClassName} />}
               >
                 <select
@@ -308,17 +310,19 @@ export function RentalSearch() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-4 border-t border-black/10 bg-black/[0.02] px-5 py-5 dark:border-white/10 dark:bg-black/10 sm:px-7 md:flex-row md:items-center md:justify-between md:px-9">
+          <div className="flex flex-col gap-4 bg-black/[0.02] px-5 py-5 dark:bg-black/10 sm:px-7 md:flex-row md:items-center md:justify-between md:px-9">
             <p className="flex items-center gap-2 text-xs leading-relaxed text-black/50 dark:text-white/50">
               <ArrowRight className="size-3.5 text-black/50 dark:text-white/55" />
-              Compare total prices from trusted Tunisian agencies. Prices shown in TND.
+              {tx(
+                "Compare total prices from trusted Tunisian agencies. Prices shown in TND.",
+              )}
             </p>
             <button
               type="submit"
               className="inline-flex h-14 shrink-0 items-center justify-center gap-2 rounded-[8px] bg-black px-8 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(0,0,0,0.12)] transition hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:translate-y-px dark:bg-white dark:text-black dark:shadow-[0_12px_30px_rgba(255,255,255,0.08)] dark:hover:bg-zinc-200 dark:focus-visible:outline-white"
             >
               <Search className="size-4" />
-              Search rental cars
+              {tx("Search rental cars")}
             </button>
           </div>
         </form>

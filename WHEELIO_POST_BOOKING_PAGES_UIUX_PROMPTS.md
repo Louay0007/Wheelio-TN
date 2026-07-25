@@ -10,6 +10,8 @@ Use each **Creation prompt** as a design or coding brief. Keep prompts intact wh
 **Related docs**
 - Pre-booking IA: `WHEELIO_CLIENT_PAGES_UIUX_PROMPTS.md`
 - Contract / PDF: checkout + `/bookings/[id]` downloads
+- Agency portal (inbox / handover / return): `WHEELIO_AGENCY_DASHBOARD_UIUX_PROMPTS.md`
+- Wheelio admin (cases / claims / refunds): `WHEELIO_ADMIN_DASHBOARD_UIUX_PROMPTS.md`
 
 ---
 

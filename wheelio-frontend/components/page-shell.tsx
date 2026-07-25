@@ -1,6 +1,10 @@
+"use client"
+
 import type { ReactNode } from "react"
 import { SiteHeader } from "@/components/search/site-header"
 import { Footer } from "@/components/footer"
+import { PreviewBanner } from "@/components/preview-banner"
+import { useLocale } from "@/lib/i18n/locale"
 import { cn } from "@/lib/utils"
 
 type PageShellProps = {
@@ -17,7 +21,10 @@ export function PageShell({
 }: PageShellProps) {
   return (
     <div className="min-h-screen bg-white text-black transition-colors dark:bg-zinc-900 dark:text-white">
-      <SiteHeader />
+      <div className="print:hidden">
+        <PreviewBanner />
+        <SiteHeader />
+      </div>
       <div
         className={cn(
           withMobileCtaPad && "pb-28 lg:pb-0",
@@ -26,7 +33,9 @@ export function PageShell({
       >
         {children}
       </div>
-      <Footer />
+      <div className="print:hidden">
+        <Footer />
+      </div>
     </div>
   )
 }
@@ -40,20 +49,22 @@ export function PageHero({
   title: string
   description?: string
 }) {
+  const { tx } = useLocale()
+
   return (
-    <header className="border-b border-black/10 dark:border-white/10">
+    <header>
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
         {eyebrow ? (
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/45 dark:text-white/45">
-            {eyebrow}
+            {tx(eyebrow)}
           </p>
         ) : null}
         <h1 className="mt-2 max-w-3xl text-3xl font-semibold tracking-[-0.04em] sm:text-5xl">
-          {title}
+          {tx(title)}
         </h1>
         {description ? (
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-black/55 dark:text-white/55 sm:text-lg">
-            {description}
+            {tx(description)}
           </p>
         ) : null}
       </div>

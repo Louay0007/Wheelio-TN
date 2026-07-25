@@ -698,7 +698,8 @@ Focus only on client pages (not agency portal, not admin). Optimize for trust, p
 
 ## Out of scope (client doc)
 
-Agency portal, admin CMS, payment provider back-office, native apps, loyalty, telematics — documented in `WHEELIO_TN_PROJECT_PLAN.md` but not detailed here.
+Agency portal — detailed in `WHEELIO_AGENCY_DASHBOARD_UIUX_PROMPTS.md`.  
+Admin CMS, payment provider back-office, native apps, loyalty, telematics — documented in `WHEELIO_TN_PROJECT_PLAN.md` but not detailed here.
 
 ---
 

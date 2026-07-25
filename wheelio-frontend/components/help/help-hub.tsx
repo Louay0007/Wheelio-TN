@@ -4,18 +4,38 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { ArrowUpRight } from "lucide-react"
 import {
-  HELP_ARTICLES,
-  HELP_TOPICS,
-  type HelpTopic,
-} from "@/lib/help-articles"
+  helpArticleSchema,
+  parseStructuredContent,
+} from "@/lib/contracts/content"
+import type { AppLocaleDto } from "@/lib/contracts/common"
+import type { CmsContent } from "@/lib/contracts/public-catalog"
+import { useCmsCollection } from "@/lib/query/public-catalog"
 
-export function HelpHubClient() {
+export function HelpHubClient({
+  locale,
+  initialData,
+}: {
+  locale: AppLocaleDto
+  initialData: CmsContent[]
+}) {
   const [query, setQuery] = useState("")
-  const [topic, setTopic] = useState<HelpTopic | "All">("All")
+  const [topic, setTopic] = useState("All")
+  const content = useCmsCollection("help", locale, initialData)
+  const allArticles = useMemo(
+    () =>
+      (content.data ?? []).map((item) =>
+        parseStructuredContent(item, helpArticleSchema),
+      ),
+    [content.data],
+  )
+  const topics = useMemo(
+    () => [...new Set(allArticles.map((article) => article.topic))],
+    [allArticles],
+  )
 
   const articles = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return HELP_ARTICLES.filter((a) => {
+    return allArticles.filter((a) => {
       if (topic !== "All" && a.topic !== topic) return false
       if (!q) return true
       return (
@@ -24,7 +44,7 @@ export function HelpHubClient() {
         a.topic.toLowerCase().includes(q)
       )
     })
-  }, [query, topic])
+  }, [allArticles, query, topic])
 
   return (
     <div className="space-y-10">
@@ -54,12 +74,12 @@ export function HelpHubClient() {
             >
               All topics
               <span className="mt-1 block text-sm font-normal text-black/45 dark:text-white/45">
-                {HELP_ARTICLES.length} articles
+                {allArticles.length} articles
               </span>
             </button>
           </li>
-          {HELP_TOPICS.map((t) => {
-            const count = HELP_ARTICLES.filter((a) => a.topic === t).length
+          {topics.map((t) => {
+            const count = allArticles.filter((a) => a.topic === t).length
             return (
               <li key={t}>
                 <button
@@ -79,7 +99,7 @@ export function HelpHubClient() {
       </div>
 
       <div>
-        <h2 className="border-b border-black/10 pb-3 text-sm font-semibold uppercase tracking-[0.14em] text-black/45 dark:border-white/10 dark:text-white/45">
+        <h2 className="pb-3 text-sm font-semibold uppercase tracking-[0.14em] text-black/45 dark:text-white/45">
           Articles
         </h2>
         {articles.length === 0 ? (
@@ -99,7 +119,7 @@ export function HelpHubClient() {
             {articles.map((article) => (
               <li key={article.slug}>
                 <Link
-                  href={`/help/${article.slug}`}
+                  href={`/help/${article.slug}?locale=${locale}`}
                   className="group flex items-start justify-between gap-4 py-5 transition"
                 >
                   <div>

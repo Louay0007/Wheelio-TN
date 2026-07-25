@@ -43,7 +43,7 @@ export function BookingRail({
 
   if (variant === "mobile") {
     return (
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white/95 px-4 py-3 backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/95 lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 bg-white/95 px-4 py-3 backdrop-blur-md dark:bg-zinc-900/95 lg:hidden">
         <div className="mx-auto flex max-w-7xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-black/40 dark:text-white/40">
@@ -60,8 +60,7 @@ export function BookingRail({
           <Link
             href={hold.expired ? "#" : checkoutHref}
             aria-disabled={hold.expired}
-            className={cn(
-              "inline-flex h-12 shrink-0 items-center justify-center rounded-[8px] px-5 text-sm font-semibold",
+            className={cn("inline-flex h-12 shrink-0 items-center justify-center rounded-[8px] px-5 text-sm font-semibold",
               hold.expired
                 ? "pointer-events-none bg-black/20 text-black/40 dark:bg-white/15 dark:text-white/40"
                 : "bg-black text-white dark:bg-white dark:text-black",
@@ -98,8 +97,7 @@ export function BookingRail({
               </p>
             </div>
             <span
-              className={cn(
-                "rounded-[6px] border px-2.5 py-1 text-[11px] font-semibold",
+              className={cn("rounded-[6px] border px-2.5 py-1 text-[11px] font-semibold",
                 offer.confirmation === "instant"
                   ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
                   : "border-black/20 text-black dark:border-white/20 dark:text-white",
@@ -125,8 +123,7 @@ export function BookingRail({
           </div>
 
           <div
-            className={cn(
-              "flex items-center gap-2 rounded-[8px] border px-3 py-2.5 text-sm",
+            className={cn("flex items-center gap-2 rounded-[8px] border px-3 py-2.5 text-sm",
               hold.expired
                 ? "border-black/20 bg-black/[0.03] text-black/50 dark:border-white/20 dark:bg-white/[0.04] dark:text-white/50"
                 : "border-black/15 text-black dark:border-white/15 dark:text-white",
@@ -146,8 +143,7 @@ export function BookingRail({
           <Link
             href={hold.expired ? "#" : checkoutHref}
             aria-disabled={hold.expired}
-            className={cn(
-              "inline-flex h-12 w-full items-center justify-center rounded-[8px] text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black dark:focus-visible:outline-white",
+            className={cn("inline-flex h-12 w-full items-center justify-center rounded-[8px] text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black dark:focus-visible:outline-white",
               hold.expired
                 ? "pointer-events-none bg-black/15 text-black/40 dark:bg-white/10 dark:text-white/40"
                 : "bg-black text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200",

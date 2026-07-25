@@ -4,33 +4,57 @@ import { notFound } from "next/navigation"
 import { ArrowUpRight } from "lucide-react"
 import { PageHero, PageShell } from "@/components/page-shell"
 import {
-  getLocation,
-  getOtherLocations,
-  LOCATIONS,
-} from "@/lib/locations"
+  publicCategorySchema,
+  publicLocationSchema,
+} from "@/lib/contracts/public-catalog"
+import { getRequestLocale } from "@/lib/i18n/server"
+import {
+  getPublishedLocation,
+  listPublishedCategories,
+  listPublishedLocations,
+} from "@/server/modules/fleet/application/public-catalog"
 
-type Props = { params: Promise<{ slug: string }> }
-
-export function generateStaticParams() {
-  return LOCATIONS.map((l) => ({ slug: l.slug }))
+type Props = {
+  params: Promise<{ slug: string }>
+  searchParams: Promise<{ locale?: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const place = getLocation(slug)
-  if (!place) return { title: "Locations | Wheelio" }
-  return {
-    title: `Car rental in ${place.shortName} | Wheelio`,
-    description: place.intro.slice(0, 155),
+  try {
+    const place = publicLocationSchema.parse(
+      await getPublishedLocation(slug, "en"),
+    )
+    return {
+      title: `Car rental in ${place.shortName} | Wheelio`,
+      description: place.intro.slice(0, 155),
+    }
+  } catch {
+    return { title: "Locations | Wheelio" }
   }
 }
 
-export default async function LocationPage({ params }: Props) {
+export default async function LocationPage({ params, searchParams }: Props) {
   const { slug } = await params
-  const place = getLocation(slug)
-  if (!place) notFound()
-
-  const others = getOtherLocations(slug)
+  const requestedLocale = (await searchParams).locale
+  const locale = await getRequestLocale(requestedLocale)
+  let place
+  try {
+    place = publicLocationSchema.parse(
+      await getPublishedLocation(slug, locale),
+    )
+  } catch {
+    notFound()
+  }
+  const [allLocations, categories] = await Promise.all([
+    listPublishedLocations(locale),
+    listPublishedCategories(locale),
+  ])
+  const others = publicLocationSchema
+    .array()
+    .parse(allLocations)
+    .filter((location) => location.slug !== slug)
+  const popularCategories = publicCategorySchema.array().parse(categories)
   const searchHref = `/search?pickup=${encodeURIComponent(place.searchPickup)}`
 
   return (
@@ -41,7 +65,7 @@ export default async function LocationPage({ params }: Props) {
         description={place.intro}
       />
 
-      <div className="border-b border-black/10 dark:border-white/10">
+      <div className="dark:border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p className="max-w-xl text-sm leading-relaxed text-black/55 dark:text-white/55">
             Start a search with <span className="font-medium text-black dark:text-white">{place.searchPickup}</span> as
@@ -63,26 +87,26 @@ export default async function LocationPage({ params }: Props) {
             </Link>
           </div>
         </div>
-        {place.startingFromTnd != null ? (
+        {place.startingFrom ? (
           <p className="mx-auto max-w-7xl px-4 pb-8 text-sm text-black/50 dark:text-white/50 sm:px-6">
-            Indicative from {place.startingFromTnd} TND per day — live totals depend on dates and agency.
+            Indicative from {Number(place.startingFrom.amountMillimes) / 1000} TND per day — live totals depend on dates and agency.
           </p>
         ) : null}
       </div>
 
-      <section className="border-b border-black/10 dark:border-white/10">
+      <section className="dark:border-white/10">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-black/45 dark:text-white/45">
             Popular categories
           </h2>
           <ul className="mt-6 flex flex-wrap gap-2">
-            {place.categories.map((cat) => (
-              <li key={cat.label}>
+            {popularCategories.map((category) => (
+              <li key={category.id}>
                 <Link
-                  href={cat.href}
+                  href={`/search?category=${encodeURIComponent(category.code)}&pickup=${encodeURIComponent(place.searchPickup)}`}
                   className="inline-flex rounded-[7px] border border-black/15 px-4 py-2.5 text-sm font-medium transition hover:border-black/40 dark:border-white/15 dark:hover:border-white/40"
                 >
-                  {cat.label}
+                  {category.label}
                 </Link>
               </li>
             ))}
@@ -90,10 +114,10 @@ export default async function LocationPage({ params }: Props) {
         </div>
       </section>
 
-      <section className="border-b border-black/10 dark:border-white/10">
+      <section className="dark:border-white/10">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
           <h2 className="text-2xl font-semibold tracking-[-0.03em]">Pickup tips</h2>
-          <ol className="mt-8 divide-y divide-black/10 border-t border-black/10 dark:divide-white/10 dark:border-white/10">
+          <ol className="mt-8 divide-y divide-black/10 dark:divide-white/10 dark:border-white/10">
             {place.pickupTips.map((tip, i) => (
               <li
                 key={tip}
@@ -109,12 +133,12 @@ export default async function LocationPage({ params }: Props) {
         </div>
       </section>
 
-      <section className="border-b border-black/10 dark:border-white/10">
+      <section className="dark:border-white/10">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
           <h2 className="text-2xl font-semibold tracking-[-0.03em]">
             FAQ for {place.shortName}
           </h2>
-          <dl className="mt-8 divide-y divide-black/10 border-t border-black/10 dark:divide-white/10 dark:border-white/10">
+          <dl className="mt-8 divide-y divide-black/10 dark:divide-white/10 dark:border-white/10">
             {place.faqs.map((faq) => (
               <div key={faq.question} className="py-6">
                 <dt className="font-medium">{faq.question}</dt>

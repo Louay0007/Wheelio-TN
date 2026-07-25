@@ -64,7 +64,7 @@ export default function ContactPage() {
             </ul>
           </div>
 
-          <div className="border-t border-black/10 pt-8 dark:border-white/10">
+          <div className="pt-8 dark:border-white/10">
             <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-black/45 dark:text-white/45">
               WhatsApp
             </h2>
@@ -82,7 +82,7 @@ export default function ContactPage() {
             </a>
           </div>
 
-          <div className="border-t border-black/10 pt-8 text-sm text-black/55 dark:border-white/10 dark:text-white/55">
+          <div className="pt-8 text-sm text-black/55 dark:border-white/10 dark:text-white/55">
             <p>
               Self-serve first:{" "}
               <Link href="/help" className="font-medium text-black underline-offset-2 hover:underline dark:text-white">

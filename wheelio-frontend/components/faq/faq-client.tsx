@@ -8,15 +8,40 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { FAQ_CATEGORIES, FAQ_ITEMS, type FaqCategory } from "@/lib/faq"
+import {
+  faqItemSchema,
+  parseStructuredContent,
+  type FaqContentItem,
+} from "@/lib/contracts/content"
+import type { AppLocaleDto } from "@/lib/contracts/common"
+import type { CmsContent } from "@/lib/contracts/public-catalog"
+import { useCmsCollection } from "@/lib/query/public-catalog"
 
-export function FaqClient() {
+export function FaqClient({
+  locale,
+  initialData,
+}: {
+  locale: AppLocaleDto
+  initialData: CmsContent[]
+}) {
   const [query, setQuery] = useState("")
-  const [category, setCategory] = useState<FaqCategory | "All">("All")
+  const [category, setCategory] = useState("All")
+  const content = useCmsCollection("faq", locale, initialData)
+  const items = useMemo(
+    () =>
+      (content.data ?? []).map((item) =>
+        parseStructuredContent(item, faqItemSchema),
+      ),
+    [content.data],
+  )
+  const categories = useMemo(
+    () => [...new Set(items.map((item) => item.category))],
+    [items],
+  )
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return FAQ_ITEMS.filter((item) => {
+    return items.filter((item) => {
       if (category !== "All" && item.category !== category) return false
       if (!q) return true
       return (
@@ -25,20 +50,20 @@ export function FaqClient() {
         item.category.toLowerCase().includes(q)
       )
     })
-  }, [query, category])
+  }, [items, query, category])
 
   const grouped = useMemo(() => {
-    const map = new Map<FaqCategory, typeof filtered>()
+    const map = new Map<string, FaqContentItem[]>()
     for (const item of filtered) {
       const list = map.get(item.category) ?? []
       list.push(item)
       map.set(item.category, list)
     }
-    return FAQ_CATEGORIES.map((cat) => ({
+    return categories.map((cat) => ({
       category: cat,
       items: map.get(cat) ?? [],
     })).filter((g) => g.items.length > 0)
-  }, [filtered])
+  }, [categories, filtered])
 
   return (
     <div className="space-y-8">
@@ -73,7 +98,7 @@ export function FaqClient() {
           onClick={() => setCategory("All")}
           label="All"
         />
-        {FAQ_CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <CategoryChip
             key={cat}
             active={category === cat}
@@ -84,7 +109,7 @@ export function FaqClient() {
       </div>
 
       {grouped.length === 0 ? (
-        <p className="border-t border-black/10 py-10 text-sm text-black/55 dark:border-white/10 dark:text-white/55">
+        <p className="py-10 text-sm text-black/55 dark:text-white/55">
           No questions match “{query}”. Try another term or{" "}
           <Link href="/contact" className="underline-offset-2 hover:underline">
             contact support
@@ -95,7 +120,7 @@ export function FaqClient() {
         <div className="space-y-12">
           {grouped.map((group) => (
             <section key={group.category}>
-              <h2 className="border-b border-black/10 pb-3 text-sm font-semibold uppercase tracking-[0.14em] text-black/45 dark:border-white/10 dark:text-white/45">
+              <h2 className="pb-3 text-sm font-semibold uppercase tracking-[0.14em] text-black/45 dark:text-white/45">
                 {group.category}
               </h2>
               <Accordion type="multiple" className="w-full">
@@ -103,7 +128,7 @@ export function FaqClient() {
                   <AccordionItem
                     key={item.id}
                     value={item.id}
-                    className="border-black/10 dark:border-white/10"
+                    className="border-black/10"
                   >
                     <AccordionTrigger className="py-5 text-left text-base font-medium hover:no-underline">
                       {item.question}

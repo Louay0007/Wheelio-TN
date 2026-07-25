@@ -1,5 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
+  serverExternalPackages: [
+    "pino",
+    "thread-stream",
+    "bullmq",
+    "ioredis",
+    "minio",
+    "postgres",
+    "nodemailer",
+  ],
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [

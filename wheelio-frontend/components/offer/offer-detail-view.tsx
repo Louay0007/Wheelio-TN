@@ -66,7 +66,7 @@ function Section({
   return (
     <section
       id={id}
-      className="scroll-mt-28 border-t border-black/10 py-10 dark:border-white/10"
+      className="scroll-mt-28 py-10"
     >
       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/40 dark:text-white/40">
         {eyebrow}
@@ -162,8 +162,7 @@ export function OfferDetailView({ offer }: OfferDetailViewProps) {
                   </span>
                 )}
                 <span
-                  className={cn(
-                    "rounded-[6px] px-2.5 py-1 text-[11px] font-semibold",
+                  className={cn("rounded-[6px] px-2.5 py-1 text-[11px] font-semibold",
                     offer.confirmation === "instant"
                       ? "bg-black text-white dark:bg-white dark:text-black"
                       : "border border-black/20 dark:border-white/20",
@@ -227,11 +226,10 @@ export function OfferDetailView({ offer }: OfferDetailViewProps) {
                 {offer.notices.map((notice) => (
                   <div
                     key={notice.id}
-                    className={cn(
-                      "rounded-[10px] border px-4 py-3",
+                    className={cn("rounded-[10px] border px-4 py-3",
                       notice.severity === "warn"
                         ? "border-black/25 bg-black/[0.03] dark:border-white/25 dark:bg-white/[0.04]"
-                        : "border-black/10 dark:border-white/10",
+                        : "border-black/10",
                     )}
                   >
                     <p className="text-sm font-semibold">{notice.title}</p>
@@ -283,7 +281,7 @@ export function OfferDetailView({ offer }: OfferDetailViewProps) {
                 Everything in this total is mandatory for this trip. The security
                 deposit is held separately at pickup and is not added here.
               </p>
-              <div className="overflow-hidden rounded-[12px] border border-black/10 dark:border-white/10">
+              <div className="overflow-hidden rounded-[12px] border border-black/10">
                 <table className="w-full text-sm">
                   <tbody>
                     {priceLines.map((line) => {
@@ -292,8 +290,7 @@ export function OfferDetailView({ offer }: OfferDetailViewProps) {
                       return (
                         <tr
                           key={line.label}
-                          className={cn(
-                            "border-b border-black/8 last:border-b-0 dark:border-white/8",
+                          className={cn("border-b border-black/8 dark:border-white/8",
                             isTotal && "bg-black/[0.03] dark:bg-white/[0.04]",
                           )}
                         >
@@ -312,8 +309,7 @@ export function OfferDetailView({ offer }: OfferDetailViewProps) {
                             )}
                           </td>
                           <td
-                            className={cn(
-                              "px-4 py-3.5 text-right tabular-nums",
+                            className={cn("px-4 py-3.5 text-right tabular-nums",
                               isTotal && "text-lg font-semibold tracking-[-0.02em]",
                               isCredit && "text-black/55 dark:text-white/55",
                             )}
@@ -465,7 +461,7 @@ export function OfferDetailView({ offer }: OfferDetailViewProps) {
                 </div>
 
                 <div
-                  className="relative flex min-h-[200px] flex-col justify-end overflow-hidden rounded-[12px] border border-black/10 bg-[linear-gradient(160deg,#f4f4f5_0%,#e4e4e7_45%,#d4d4d8_100%)] p-4 dark:border-white/10 dark:bg-[linear-gradient(160deg,#27272a_0%,#18181b_55%,#09090b_100%)]"
+                  className="relative flex min-h-[200px] flex-col justify-end overflow-hidden rounded-[12px] border border-black/10 bg-[linear-gradient(160deg,#f4f4f5_0%,#e4e4e7_45%,#d4d4d8_100%)] p-4 dark:bg-[linear-gradient(160deg,#27272a_0%,#18181b_55%,#09090b_100%)]"
                   aria-label={`Map placeholder for ${offer.mapLabel}`}
                 >
                   <div
@@ -480,7 +476,7 @@ export function OfferDetailView({ offer }: OfferDetailViewProps) {
                   <div className="relative mx-auto mb-8 flex size-10 items-center justify-center rounded-full border-2 border-black bg-white shadow-sm dark:border-white dark:bg-zinc-900">
                     <MapPin className="size-4" />
                   </div>
-                  <div className="relative rounded-[8px] border border-black/10 bg-white/90 px-3 py-2 backdrop-blur dark:border-white/10 dark:bg-black/70">
+                  <div className="relative rounded-[8px] border border-black/10 bg-white/90 px-3 py-2 backdrop-blur dark:bg-black/70">
                     <p className="text-sm font-semibold">{offer.mapLabel}</p>
                     <p className="text-xs text-black/50 dark:text-white/50">
                       {offer.mapHint}
@@ -505,7 +501,7 @@ export function OfferDetailView({ offer }: OfferDetailViewProps) {
                   </li>
                 ))}
               </ul>
-              <p className="mt-5 rounded-[10px] border border-black/10 px-4 py-3 text-sm leading-relaxed text-black/60 dark:border-white/10 dark:text-white/60">
+              <p className="mt-5 rounded-[10px] border border-black/10 px-4 py-3 text-sm leading-relaxed text-black/60 dark:text-white/60">
                 <span className="font-semibold text-black dark:text-white">
                   No-show:{" "}
                 </span>

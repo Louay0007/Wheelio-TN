@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Host_Grotesk, EB_Garamond } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
+import { AppProviders } from '@/app/providers'
 import './globals.css'
 
 const hostGrotesk = Host_Grotesk({ subsets: ["latin"], variable: "--font-host-grotesk" });
@@ -47,7 +48,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <AppProviders>{children}</AppProviders>
         </ThemeProvider>
         <Analytics />
       </body>

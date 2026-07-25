@@ -76,7 +76,7 @@ function Section({
   children: ReactNode
 }) {
   return (
-    <section className="border-b border-black/10 py-5 last:border-b-0 dark:border-white/10">
+    <section className="py-5">
       <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/45 dark:text-white/45">
         {title}
       </h3>
@@ -162,16 +162,14 @@ export function FiltersPanel({
                     categories: toggleValue(filters.categories, item.value),
                   })
                 }
-                className={cn(
-                  "flex flex-col items-center gap-2 rounded-[10px] border px-2 py-3 text-center transition",
+                className={cn("flex flex-col items-center gap-2 rounded-[10px] border px-2 py-3 text-center transition",
                   active
                     ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
                     : "border-black/15 text-black/75 hover:border-black/40 hover:bg-black/[0.02] dark:border-white/15 dark:text-white/75 dark:hover:border-white/40 dark:hover:bg-white/[0.03]",
                 )}
               >
                 <span
-                  className={cn(
-                    "flex h-10 w-full items-center justify-center",
+                  className={cn("flex h-10 w-full items-center justify-center",
                     active ? "opacity-100" : "opacity-80",
                   )}
                 >

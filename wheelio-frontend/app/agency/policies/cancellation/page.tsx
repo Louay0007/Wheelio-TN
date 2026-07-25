@@ -1,0 +1,7 @@
+"use client"
+
+import { AgencyPolicyEditor } from "@/components/agency/agency-policy-editor"
+
+export default function PolicyCancellationPage() {
+  return <AgencyPolicyEditor kind="cancellation" />
+}

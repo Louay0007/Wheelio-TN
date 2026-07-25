@@ -2,49 +2,69 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowUpRight, MapPin, Star } from "lucide-react"
+import { ArrowUpRight, Building2, MapPin, Star } from "lucide-react"
 import { PageHero, PageShell } from "@/components/page-shell"
-import {
-  getAgency,
-  listAgencySlugs,
-  searchHrefForAgency,
-} from "@/lib/agencies"
+import { publicAgencyDetailSchema } from "@/lib/contracts/public-catalog"
+import { getRequestLocale } from "@/lib/i18n/server"
+import { getPublicAgency } from "@/server/modules/fleet/application/public-catalog"
 
 type PageProps = {
   params: Promise<{ slug: string }>
-}
-
-export function generateStaticParams() {
-  return listAgencySlugs().map((slug) => ({ slug }))
+  searchParams: Promise<{ locale?: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
-  const agency = getAgency(slug)
-  if (!agency) return { title: "Agency | Wheelio" }
-  return {
-    title: `${agency.name} | Wheelio TN`,
-    description: `Compare ${agency.name} rental offers in ${agency.cities.join(", ")}. Rating ${agency.rating.toFixed(1)}. Prices in TND.`,
+  try {
+    const agency = publicAgencyDetailSchema.parse(
+      await getPublicAgency(slug, "en"),
+    )
+    return {
+      title: `${agency.name} | Wheelio TN`,
+      description: `Compare ${agency.name} rental offers in ${agency.city}. Rating ${agency.rating.toFixed(1)}. Prices in TND.`,
+    }
+  } catch {
+    return { title: "Agency | Wheelio" }
   }
 }
 
-export default async function AgencyProfilePage({ params }: PageProps) {
+export default async function AgencyProfilePage({
+  params,
+  searchParams,
+}: PageProps) {
   const { slug } = await params
-  const agency = getAgency(slug)
-  if (!agency) notFound()
+  const locale = await getRequestLocale((await searchParams).locale)
+  let agency
+  try {
+    agency = publicAgencyDetailSchema.parse(
+      await getPublicAgency(slug, locale),
+    )
+  } catch {
+    notFound()
+  }
 
   return (
     <PageShell>
       <PageHero
         eyebrow="Agency profile"
         title={agency.name}
-        description={`Local partner covering ${agency.cities.join(", ")}. Compare their live offers on Wheelio in TND.`}
+        description={`Local partner in ${agency.city}. Compare their live offers on Wheelio in TND.`}
       />
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
-        <div className="flex flex-wrap items-start gap-6 border-b border-black/10 pb-10 dark:border-white/10">
-          <div className="relative size-20 overflow-hidden rounded-[8px] border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-800">
-            <Image src={agency.logo} alt="" fill className="object-contain p-2" />
+        <div className="flex flex-wrap items-start gap-6 pb-10 dark:border-white/10">
+          <div className="relative flex size-20 items-center justify-center overflow-hidden rounded-[8px] border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-800">
+            {agency.logoUrl ? (
+              <Image
+                src={agency.logoUrl}
+                alt=""
+                fill
+                sizes="80px"
+                className="object-contain p-2"
+              />
+            ) : (
+              <Building2 className="size-7 text-black/35 dark:text-white/35" />
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-4 text-sm">
@@ -56,53 +76,43 @@ export default async function AgencyProfilePage({ params }: PageProps) {
                 </span>
               </span>
               <span className="text-black/50 dark:text-white/50">
-                {agency.offerCount} sample offer{agency.offerCount === 1 ? "" : "s"} ·{" "}
-                {agency.instantShare}% instant
+                {agency.instantEnabled ? "Instant booking" : "Booking request"}
               </span>
             </div>
             <p className="mt-4 max-w-2xl rounded-[8px] border border-black/10 bg-black/[0.02] px-4 py-3 text-sm leading-relaxed text-black/65 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/65">
-              {agency.verificationNote}
+              Verified marketplace partner. Always review the offer policies before booking.
             </p>
           </div>
         </div>
 
         <div className="mt-10 grid gap-10 lg:grid-cols-2">
           <div>
-            <h2 className="text-lg font-semibold tracking-[-0.02em]">Branches & pickup points</h2>
-            <ul className="mt-4 space-y-3">
-              {agency.locationLabels.map((label) => (
-                <li
-                  key={label}
-                  className="flex items-start gap-2 text-sm text-black/65 dark:text-white/65"
-                >
-                  <MapPin className="mt-0.5 size-4 shrink-0" />
-                  {label}
-                </li>
-              ))}
-            </ul>
+            <h2 className="text-lg font-semibold tracking-[-0.02em]">Pickup area</h2>
+            <p className="mt-4 flex items-start gap-2 text-sm text-black/65 dark:text-white/65">
+              <MapPin className="mt-0.5 size-4 shrink-0" />
+              {agency.pickupDescription || agency.city}
+            </p>
 
-            <h2 className="mt-10 text-lg font-semibold tracking-[-0.02em]">Policy highlights</h2>
-            <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-black/65 dark:text-white/65">
-              {agency.policies.map((p) => (
-                <li key={p}>{p}</li>
-              ))}
-            </ul>
+            <h2 className="mt-10 text-lg font-semibold tracking-[-0.02em]">About</h2>
+            <p className="mt-4 text-sm leading-relaxed text-black/65 dark:text-white/65">
+              {agency.bio || `${agency.name} is a Wheelio rental partner in ${agency.city}.`}
+            </p>
           </div>
 
           <div>
             <h2 className="text-lg font-semibold tracking-[-0.02em]">Reviews excerpt</h2>
             <ul className="mt-4 space-y-4">
-              {agency.reviewsExcerpt.map((r) => (
+              {agency.reviews.map((review) => (
                 <li
-                  key={r.quote}
+                  key={review.id}
                   className="rounded-[8px] border border-black/10 p-4 dark:border-white/10"
                 >
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <Star className="size-3.5 fill-current" />
-                    {r.rating}.0 · {r.name}
+                    {review.rating}.0 · {review.authorDisplayName}
                   </div>
                   <p className="mt-2 text-sm leading-relaxed text-black/60 dark:text-white/60">
-                    “{r.quote}”
+                    “{review.body}”
                   </p>
                 </li>
               ))}
@@ -118,14 +128,14 @@ export default async function AgencyProfilePage({ params }: PageProps) {
 
         <div className="mt-12 flex flex-wrap gap-3">
           <Link
-            href={searchHrefForAgency(agency.name)}
+            href={`/search?agency=${encodeURIComponent(agency.name)}`}
             className="inline-flex h-11 items-center gap-2 rounded-[7px] bg-black px-5 text-sm font-semibold text-white dark:bg-white dark:text-black"
           >
             View available cars
             <ArrowUpRight className="size-4" />
           </Link>
           <Link
-            href="/agencies"
+            href={`/agencies?locale=${locale}`}
             className="inline-flex h-11 items-center rounded-[7px] border border-black/15 px-5 text-sm font-semibold dark:border-white/15"
           >
             All agencies

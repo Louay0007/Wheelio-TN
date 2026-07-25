@@ -142,7 +142,7 @@ function TestimonialsColumn({
                         },
                       }
                 }
-                className="group w-full max-w-xs cursor-default select-none rounded-[20px] border border-black/10 bg-white p-8 shadow-[0_18px_50px_rgba(0,0,0,0.06)] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-black/25 dark:border-white/10 dark:bg-black dark:shadow-[0_18px_50px_rgba(0,0,0,0.28)] dark:focus-visible:ring-white/30 sm:p-9"
+                className="group w-full max-w-xs cursor-default select-none rounded-[20px] border border-black/10 bg-white p-8 shadow-[0_18px_50px_rgba(0,0,0,0.06)] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-black/25 dark:bg-black dark:shadow-[0_18px_50px_rgba(0,0,0,0.28)] dark:focus-visible:ring-white/30 sm:p-9"
               >
                 <blockquote>
                   <p className="m-0 text-[15px] font-normal leading-7 text-black/65 transition-colors dark:text-white/65">
@@ -183,7 +183,7 @@ export default function TestimonialsSection() {
     <section
       id="testimonials"
       aria-labelledby="testimonials-heading"
-      className="relative overflow-hidden border-t border-black/10 bg-white py-20 transition-colors dark:border-white/10 dark:bg-zinc-900 md:py-28"
+      className="relative overflow-hidden bg-white py-20 transition-colors dark:bg-zinc-900 md:py-28"
     >
       <motion.div
         initial={reduceMotion ? false : { opacity: 0, y: 42 }}

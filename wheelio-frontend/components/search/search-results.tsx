@@ -16,7 +16,7 @@ import {
 } from "lucide-react"
 import { Footer } from "@/components/footer"
 import { FiltersPanel } from "@/components/search/filters-panel"
-import { OfferCard, OfferCardSkeleton } from "@/components/search/offer-card"
+import { OfferCardSkeleton } from "@/components/search/offer-card"
 import { SiteHeader } from "@/components/search/site-header"
 import { TripSummaryBar } from "@/components/search/trip-summary-bar"
 import {
@@ -26,17 +26,17 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { SEARCH_OFFERS } from "@/lib/search-offers"
+import { useCanonicalSearch, useCreateQuote } from "@/lib/query/checkout"
+import { useLocale } from "@/lib/i18n/locale"
+import type { SearchOffer } from "@/lib/contracts/checkout"
 import type { SearchFilters, SortOption, TripQuery } from "@/lib/search-types"
 import {
   countActiveFilters,
   defaultFilters,
   driverAgeLabel,
-  filterOffers,
   formatTripDate,
   parseTripQuery,
   rentalDays,
-  sortOffers,
   tripToSearchParams,
 } from "@/lib/search-utils"
 
@@ -109,7 +109,6 @@ export function SearchResults() {
 
   const [filters, setFilters] = useState<SearchFilters>(defaultFilters)
   const [sort, setSort] = useState<SortOption>("recommended")
-  const [loadState, setLoadState] = useState<LoadState>("loading")
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [modifyOpen, setModifyOpen] = useState(false)
   const [draftTrip, setDraftTrip] = useState(trip)
@@ -118,16 +117,20 @@ export function SearchResults() {
     setDraftTrip(trip)
   }, [trip])
 
-  useEffect(() => {
-    setLoadState("loading")
-    const timer = window.setTimeout(() => setLoadState("ready"), 700)
-    return () => window.clearTimeout(timer)
-  }, [searchParams])
-
-  const filtered = useMemo(
-    () => sortOffers(filterOffers(SEARCH_OFFERS, filters), sort),
-    [filters, sort],
-  )
+  const { locale, tx } = useLocale()
+  const searchInput = useMemo(() => ({
+    pickupLocation: trip.pickupLocation,
+    dropoffLocation: trip.dropoffLocation,
+    pickupAt: new Date(`${trip.pickupDate}T${trip.pickupTime}:00+01:00`).toISOString(),
+    returnAt: new Date(`${trip.dropoffDate}T${trip.dropoffTime}:00+01:00`).toISOString(),
+    locale,
+    ageBand: (trip.driverAge === "18-20" ? undefined : trip.driverAge) as "21-24" | "25-29" | "30" | undefined,
+  }), [trip, locale])
+  const search = useCanonicalSearch(searchInput)
+  const createQuoteMutation = useCreateQuote()
+  const apiOffers = search.data?.offers ?? []
+  const filtered = useMemo(() => apiOffers, [apiOffers])
+  const loadState: LoadState = search.isPending ? "loading" : search.isError ? "error" : "ready"
   const activeFilterCount = countActiveFilters(filters)
 
   const applyTrip = (next: TripQuery) => {
@@ -171,7 +174,7 @@ export function SearchResults() {
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
-              Compare rental offers
+              {tx("Compare rental offers")}
             </h1>
             <p className="mt-1 text-sm text-black/50 dark:text-white/50">
               Total prices in TND from Tunisian agencies ·{" "}
@@ -245,10 +248,7 @@ export function SearchResults() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => {
-                    setLoadState("loading")
-                    window.setTimeout(() => setLoadState("ready"), 700)
-                  }}
+                  onClick={() => void search.refetch()}
                   className="mt-6 inline-flex h-11 items-center gap-2 rounded-[8px] bg-black px-5 text-sm font-semibold text-white dark:bg-white dark:text-black"
                 >
                   <RefreshCw className="size-4" />
@@ -289,11 +289,21 @@ export function SearchResults() {
               </div>
             ) : (
               filtered.map((offer) => (
-                <OfferCard
-                  key={offer.id}
+                <CanonicalOfferCard
+                  key={offer.offerId}
                   offer={offer}
-                  days={days}
-                  tripQuery={searchParams.toString()}
+                  busy={createQuoteMutation.isPending}
+                  onSelect={async () => {
+                    const quote = await createQuoteMutation.mutateAsync({
+                      searchId: search.data!.searchId,
+                      offerId: offer.offerId,
+                      agencyId: offer.agencyId,
+                      categoryCode: offer.categoryCode,
+                      ratePlanId: offer.ratePlanId,
+                      paymentMode: offer.paymentMode,
+                    })
+                    router.push(`/checkout?quoteId=${encodeURIComponent(quote.quoteId)}`)
+                  }}
                 />
               ))
             )}
@@ -308,7 +318,7 @@ export function SearchResults() {
           side="bottom"
           className="max-h-[88vh] overflow-y-auto rounded-t-[18px] border-black/10 bg-white p-0 dark:border-white/10 dark:bg-zinc-900"
         >
-          <SheetHeader className="sticky top-0 z-10 border-b border-black/10 bg-white/95 px-5 py-4 backdrop-blur dark:border-white/10 dark:bg-zinc-900/95">
+          <SheetHeader className="sticky top-0 z-10 bg-white/95 px-5 py-4 backdrop-blur dark:border-white/10 dark:bg-zinc-900/95">
             <SheetTitle className="text-left text-black dark:text-white">
               Filters
             </SheetTitle>
@@ -339,7 +349,7 @@ export function SearchResults() {
           side="bottom"
           className="max-h-[92vh] overflow-y-auto rounded-t-[18px] border-black/10 bg-white p-0 dark:border-white/10 dark:bg-zinc-900 sm:mx-auto sm:max-w-xl sm:rounded-[18px] sm:border"
         >
-          <SheetHeader className="border-b border-black/10 px-5 py-4 dark:border-white/10">
+          <SheetHeader className="px-5 py-4 dark:border-white/10">
             <SheetTitle className="text-left text-black dark:text-white">
               Modify search
             </SheetTitle>
@@ -543,6 +553,47 @@ export function SearchResults() {
         </SheetContent>
       </Sheet>
     </div>
+  )
+}
+
+function CanonicalOfferCard({
+  offer,
+  busy,
+  onSelect,
+}: {
+  offer: SearchOffer
+  busy: boolean
+  onSelect: () => Promise<void>
+}) {
+  const total = Number(offer.pricing.commissionable.amountMillimes) / 1000
+  return (
+    <article className="rounded-[14px] border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-zinc-950">
+      <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-black/45 dark:text-white/45">
+            {offer.categoryCode}
+          </p>
+          <h2 className="mt-1 text-xl font-semibold">{offer.vehicle.make} {offer.vehicle.model}</h2>
+          <p className="mt-1 text-sm text-black/55 dark:text-white/55">
+            {offer.agencyName} · {offer.confirmationMode === "instant" ? "Instant" : "Request"}
+          </p>
+        </div>
+        <div className="sm:text-right">
+          <p className="text-3xl font-semibold tabular-nums">{total.toFixed(3)} TND</p>
+          <p className="text-xs text-black/45 dark:text-white/45">
+            Deposit {Number(offer.pricing.deposit.amountMillimes) / 1000} TND
+          </p>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void onSelect()}
+            className="mt-3 h-11 rounded-[8px] bg-black px-5 text-sm font-semibold text-white disabled:opacity-50 dark:bg-white dark:text-black"
+          >
+            {busy ? "Creating quote…" : "Continue"}
+          </button>
+        </div>
+      </div>
+    </article>
   )
 }
 

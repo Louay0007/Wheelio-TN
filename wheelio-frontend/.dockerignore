@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+Dockerfile
+compose.yaml
+.env
+.env.*
+!.env.example
+coverage
+*.log
+.turbo

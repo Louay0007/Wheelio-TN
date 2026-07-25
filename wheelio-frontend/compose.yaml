@@ -1,0 +1,95 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: wheelio
+      POSTGRES_PASSWORD: wheelio
+      POSTGRES_DB: wheelio
+    ports:
+      - "5433:5432"
+    volumes:
+      - wheelio_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wheelio -d wheelio"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: wheelio
+      MINIO_ROOT_PASSWORD: wheelio-secret
+    ports:
+      - "9010:9000"
+      - "9011:9001"
+    volumes:
+      - wheelio_minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "1125:1025"
+      - "8125:8025"
+
+  migrate:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      DATABASE_URL: postgresql://wheelio:wheelio@postgres:5432/wheelio
+    command: >
+      bash -lc "corepack enable && pnpm install && pnpm db:generate && pnpm db:migrate"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: ["tools"]
+
+  worker:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://wheelio:wheelio@postgres:5432/wheelio
+      REDIS_URL: redis://redis:6379
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: wheelio
+      MINIO_SECRET_KEY: wheelio-secret
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      APP_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: dev-only-change-me-wheelio-tn-secret-key-32
+    command: >
+      bash -lc "corepack enable && pnpm install && pnpm worker"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    profiles: ["app"]
+
+volumes:
+  wheelio_pg:
+  wheelio_minio:

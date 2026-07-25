@@ -142,3 +142,19 @@
     @apply bg-background text-foreground transition-colors;
   }
 }
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .booking-voucher {
+    border-color: #111 !important;
+    box-shadow: none !important;
+  }
+}

@@ -55,7 +55,7 @@ export default function CarTypesIndexPage() {
           ))}
         </ul>
 
-        <div className="mt-12 flex flex-wrap gap-3 border-t border-black/10 pt-10 dark:border-white/10">
+        <div className="mt-12 flex flex-wrap gap-3 pt-10 dark:border-white/10">
           <Link
             href="/search"
             className="inline-flex h-11 items-center justify-center rounded-[7px] bg-black px-5 text-sm font-semibold text-white transition hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"

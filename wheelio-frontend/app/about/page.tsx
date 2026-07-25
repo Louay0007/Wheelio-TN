@@ -2,6 +2,9 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowUpRight, Mail, MapPin } from "lucide-react"
 import { PageHero, PageShell } from "@/components/page-shell"
+import { cmsContentSchema } from "@/lib/contracts/public-catalog"
+import { getRequestLocale } from "@/lib/i18n/server"
+import { getPublishedContent } from "@/server/modules/reviews-content/application/get-published-content"
 
 export const metadata: Metadata = {
   title: "About Wheelio TN",
@@ -9,14 +12,23 @@ export const metadata: Metadata = {
     "Wheelio is a Tunisia-first multi-agency car rental marketplace — compare local agencies, clear TND totals, reliable booking.",
 }
 
-export default function AboutPage() {
+type PageProps = {
+  searchParams: Promise<{ locale?: string }>
+}
+
+export default async function AboutPage({ searchParams }: PageProps) {
+  const locale = await getRequestLocale((await searchParams).locale)
+  const cms = cmsContentSchema.parse(
+    await getPublishedContent({
+      kind: "page",
+      slug: "about",
+      locale,
+    }),
+  )
+
   return (
     <PageShell>
-      <PageHero
-        eyebrow="About"
-        title="A marketplace for Tunisia car rental"
-        description="Wheelio helps travellers compare trusted local agencies — we do not own the fleet. Clear TND totals, separate deposits, and honest confirmation labels."
-      />
+      <PageHero eyebrow="About" title={cms.title} description={cms.body} />
 
       <section className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
         <h2 className="text-xl font-semibold tracking-[-0.02em]">Mission</h2>
@@ -43,10 +55,7 @@ export default function AboutPage() {
         <ul className="mt-4 space-y-3 text-sm text-black/65 dark:text-white/65">
           <li className="flex items-center gap-2">
             <Mail className="size-4 shrink-0" />
-            <a
-              href="mailto:hello@wheelio.tn"
-              className="underline-offset-4 hover:underline"
-            >
+            <a href="mailto:hello@wheelio.tn" className="underline-offset-4 hover:underline">
               hello@wheelio.tn
             </a>
           </li>
@@ -56,21 +65,20 @@ export default function AboutPage() {
           </li>
         </ul>
 
-        <div className="mt-12 flex flex-wrap gap-3 border-t border-black/10 pt-10 dark:border-white/10">
+        <div className="mt-12 flex flex-wrap gap-3 pt-10 dark:border-white/10">
           <Link
             href="/search"
-            className="inline-flex h-11 items-center gap-2 rounded-[7px] bg-black px-5 text-sm font-semibold text-white dark:bg-white dark:text-black"
+            className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-black px-4 text-sm font-semibold text-white dark:bg-white dark:text-black"
           >
-            Find a car
+            Search cars
             <ArrowUpRight className="size-4" />
           </Link>
-          <a
-            href="mailto:partners@wheelio.tn"
-            className="inline-flex h-11 items-center gap-2 rounded-[7px] border border-black/15 px-5 text-sm font-semibold dark:border-white/15"
+          <Link
+            href="/partners"
+            className="inline-flex h-11 items-center rounded-[8px] border border-black/20 px-4 text-sm font-semibold dark:border-white/20"
           >
-            List your agency
-            <ArrowUpRight className="size-4" />
-          </a>
+            Partner with us
+          </Link>
         </div>
       </section>
     </PageShell>

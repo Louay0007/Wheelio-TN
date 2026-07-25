@@ -4,35 +4,60 @@ import { notFound } from "next/navigation"
 import { PageHero, PageShell } from "@/components/page-shell"
 import { HelpfulFeedback } from "@/components/help/helpful-feedback"
 import {
-  getHelpArticle,
-  getRelatedArticles,
-  HELP_ARTICLES,
-} from "@/lib/help-articles"
+  helpArticleSchema,
+  parseStructuredContent,
+} from "@/lib/contracts/content"
+import { getRequestLocale } from "@/lib/i18n/server"
+import {
+  getTypedContent,
+  listTypedContent,
+} from "@/server/modules/reviews-content/application/get-typed-content"
 
-type Props = { params: Promise<{ article: string }> }
-
-export function generateStaticParams() {
-  return HELP_ARTICLES.map((a) => ({ article: a.slug }))
+type Props = {
+  params: Promise<{ article: string }>
+  searchParams: Promise<{ locale?: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { article: slug } = await params
-  const article = getHelpArticle(slug)
-  if (!article) return { title: "Help | Wheelio" }
-  return {
-    title: `${article.title} | Wheelio Help`,
-    description: article.summary,
+  try {
+    const content = await getTypedContent("help", slug, "en")
+    const article = parseStructuredContent(content, helpArticleSchema)
+    return {
+      title: `${article.title} | Wheelio Help`,
+      description: article.summary,
+    }
+  } catch {
+    return { title: "Help | Wheelio" }
   }
 }
 
-export default async function HelpArticlePage({ params }: Props) {
+export default async function HelpArticlePage({ params, searchParams }: Props) {
   const { article: slug } = await params
-  const article = getHelpArticle(slug)
-  if (!article) notFound()
-
-  const related = getRelatedArticles(article)
+  const locale = await getRequestLocale((await searchParams).locale)
+  let contentPayload
+  try {
+    contentPayload = await Promise.all([
+      getTypedContent("help", slug, locale),
+      listTypedContent("help", locale),
+    ])
+  } catch {
+    notFound()
+  }
+  const [content, allContent] = contentPayload
+  const article = parseStructuredContent(content, helpArticleSchema)
+  const allArticles = allContent.map((item) =>
+    parseStructuredContent(item, helpArticleSchema),
+  )
+  const relatedBySlug = new Map(
+    allArticles.map((relatedArticle) => [relatedArticle.slug, relatedArticle]),
+  )
+  const related = article.relatedSlugs.flatMap((relatedSlug) => {
+    const relatedArticle = relatedBySlug.get(relatedSlug)
+    return relatedArticle ? [relatedArticle] : []
+  })
   const updated = new Date(article.updatedAt + "T12:00:00").toLocaleDateString(
-    "en-GB",
+    locale === "fr" ? "fr-FR" : "en-GB",
     { day: "numeric", month: "long", year: "numeric" },
   )
 
@@ -46,18 +71,18 @@ export default async function HelpArticlePage({ params }: Props) {
 
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
         <nav className="text-sm text-black/45 dark:text-white/45">
-          <Link href="/help" className="hover:text-black dark:hover:text-white">
+          <Link href={`/help?locale=${locale}`} className="hover:text-black dark:hover:text-white">
             Help centre
           </Link>
           <span className="mx-2">/</span>
           <span className="text-black/70 dark:text-white/70">{article.title}</span>
         </nav>
 
-        <ol className="mt-10 space-y-0 border-t border-black/10 dark:border-white/10">
+        <ol className="mt-10 space-y-0 dark:border-white/10">
           {article.steps.map((step, i) => (
             <li
               key={step}
-              className="grid grid-cols-[40px_minmax(0,1fr)] gap-4 border-b border-black/10 py-6 dark:border-white/10"
+              className="grid grid-cols-[40px_minmax(0,1fr)] gap-4 py-6 dark:border-white/10"
             >
               <span className="text-sm font-semibold text-black/35 dark:text-white/35">
                 {String(i + 1).padStart(2, "0")}
@@ -74,7 +99,7 @@ export default async function HelpArticlePage({ params }: Props) {
         </div>
 
         {related.length > 0 ? (
-          <aside className="mt-12 border-t border-black/10 pt-8 dark:border-white/10">
+          <aside className="mt-12 pt-8 dark:border-white/10">
             <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-black/45 dark:text-white/45">
               Related
             </h2>
@@ -82,7 +107,7 @@ export default async function HelpArticlePage({ params }: Props) {
               {related.map((r) => (
                 <li key={r.slug}>
                   <Link
-                    href={`/help/${r.slug}`}
+                    href={`/help/${r.slug}?locale=${locale}`}
                     className="text-base font-medium underline-offset-2 hover:underline"
                   >
                     {r.title}

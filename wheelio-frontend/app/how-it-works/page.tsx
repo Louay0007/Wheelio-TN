@@ -46,7 +46,7 @@ export default function HowItWorksPage() {
         description="Wheelio is a Tunisia car rental marketplace — we help you find and book cars from independent agencies. We do not own the fleet."
       />
 
-      <section className="border-b border-black/10 dark:border-white/10">
+      <section className="dark:border-white/10">
         <ol className="mx-auto max-w-7xl divide-y divide-black/10 px-4 dark:divide-white/10 sm:px-6">
           {STEPS.map((step) => (
             <li
@@ -69,9 +69,9 @@ export default function HowItWorksPage() {
         </ol>
       </section>
 
-      <section className="border-b border-black/10 dark:border-white/10">
+      <section className="dark:border-white/10">
         <div className="mx-auto grid max-w-7xl gap-0 px-4 sm:px-6 lg:grid-cols-2">
-          <div className="border-b border-black/10 py-10 dark:border-white/10 lg:border-b-0 lg:border-r lg:pr-12 lg:py-14">
+          <div className="py-10 lg:border-b-0 lg:border-r lg:pr-12 lg:py-14">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/45 dark:text-white/45">
               Confirmation type
             </p>

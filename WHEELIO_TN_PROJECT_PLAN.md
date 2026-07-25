@@ -142,6 +142,8 @@ Launch in one area such as Greater Tunis/Tunis-Carthage Airport, Djerba, Monasti
 - Manage locations, categories, policies, promotions, and audit logs.
 - Basic marketplace analytics.
 
+**UI/UX planning:** `WHEELIO_ADMIN_DASHBOARD_UIUX_PROMPTS.md` (full `/admin/*` IA, roles, sprints).
+
 ### Not in MVP
 
 Native apps, AI pricing, nationwide launch, loyalty, telematics, damage-recognition AI, complete agency accounting, and a public API.

@@ -24,6 +24,12 @@ import {
   type PaymentMode,
 } from "@/lib/bookings"
 import {
+  createBookingFromQuote,
+  createHold,
+  createPaymentIntent,
+} from "@/lib/gateways/checkout"
+import { useApiCheckoutSlice } from "@/lib/gateways/flags"
+import {
   buildContractPayload,
   type ContractPayload,
 } from "@/lib/contract-document"
@@ -242,6 +248,58 @@ export function CheckoutForm() {
 
     setComposingPdf(true)
     try {
+      const quoteId = searchParams.get("quoteId")
+      const quoteVersion = Number(searchParams.get("quoteVersion") ?? "1") || 1
+      if (useApiCheckoutSlice() && quoteId) {
+        const idempotencyKey =
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `checkout-${Date.now()}`
+        try {
+          await createHold(
+            quoteId,
+            { expectedQuoteVersion: quoteVersion },
+            idempotencyKey,
+          )
+          const booking = await createBookingFromQuote(
+            {
+              quoteId,
+              expectedQuoteVersion: quoteVersion,
+              contactEmail,
+              contactName,
+              driverFullName: driverName,
+              driverLicenseCountry: licenseCountry,
+              paymentMode,
+              locale: document.documentElement.lang === "fr" ? "fr" : "en",
+            },
+            `booking-${idempotencyKey}`,
+          )
+          if (paymentMode === "deposit_online") {
+            await createPaymentIntent(booking.id, {
+              purpose: "rental",
+              idempotencyKey: `pi-${booking.id}`,
+            })
+          }
+          startTransition(() => {
+            const params = new URLSearchParams(searchParams.toString())
+            params.set("offerId", offerId)
+            params.set("payment", paymentMode)
+            params.set("signed", "1")
+            router.push(
+              `/bookings/${booking.id}/confirmation?${params.toString()}`,
+            )
+          })
+          return
+        } catch (apiError) {
+          const message =
+            apiError instanceof Error
+              ? apiError.message
+              : "Checkout API failed"
+          setSubmitError(message)
+          return
+        }
+      }
+
       const bookingId = contractPayload?.bookingId || createBookingId(offerId)
       const payload = await buildContractPayload({
         offer,
@@ -345,8 +403,7 @@ export function CheckoutForm() {
             {offer.agency.name} · {offer.categoryLabel}
           </p>
           <span
-            className={cn(
-              "mt-1 inline-flex rounded-[5px] px-2 py-0.5 text-[10px] font-semibold",
+            className={cn("mt-1 inline-flex rounded-[5px] px-2 py-0.5 text-[10px] font-semibold",
               offer.confirmation === "instant"
                 ? "bg-black text-white dark:bg-white dark:text-black"
                 : "border border-black/20 dark:border-white/20",
@@ -368,7 +425,7 @@ export function CheckoutForm() {
           <dt className="text-black/55 dark:text-white/55">Extras</dt>
           <dd className="tabular-nums">{formatTnd(extrasTotal)}</dd>
         </div>
-        <div className="flex justify-between gap-3 border-t border-black/10 pt-2 font-semibold dark:border-white/10">
+        <div className="flex justify-between gap-3 pt-2 font-semibold">
           <dt>Trip total</dt>
           <dd className="text-lg tabular-nums tracking-[-0.02em]">
             {formatTnd(grandTotal)}
@@ -387,8 +444,7 @@ export function CheckoutForm() {
       </dl>
 
       <div
-        className={cn(
-          "flex items-center gap-2 rounded-[8px] border px-3 py-2.5 text-sm",
+        className={cn("flex items-center gap-2 rounded-[8px] border px-3 py-2.5 text-sm",
           hold.expired
             ? "border-black/25 bg-black/[0.03] dark:border-white/25"
             : "border-black/12 dark:border-white/12",
@@ -436,8 +492,7 @@ export function CheckoutForm() {
 
           <ol className="mt-5 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em]">
             <li
-              className={cn(
-                "rounded-[6px] px-2.5 py-1",
+              className={cn("rounded-[6px] px-2.5 py-1",
                 step === "details"
                   ? "bg-black text-white dark:bg-white dark:text-black"
                   : "border border-black/15 text-black/50 dark:border-white/15 dark:text-white/50",
@@ -447,8 +502,7 @@ export function CheckoutForm() {
             </li>
             <li className="text-black/25 dark:text-white/25">→</li>
             <li
-              className={cn(
-                "rounded-[6px] px-2.5 py-1",
+              className={cn("rounded-[6px] px-2.5 py-1",
                 step === "contract"
                   ? "bg-black text-white dark:bg-white dark:text-black"
                   : "border border-black/15 text-black/50 dark:border-white/15 dark:text-white/50",
@@ -488,7 +542,7 @@ export function CheckoutForm() {
                 className="space-y-10"
                 noValidate
               >
-                <section className="border-b border-black/10 pb-8 dark:border-white/10">
+                <section className="pb-8">
                   <div className="flex flex-wrap items-end justify-between gap-3">
                     <div>
                       <h2 className="text-lg font-semibold tracking-[-0.02em]">
@@ -515,7 +569,7 @@ export function CheckoutForm() {
                   </div>
                 </section>
 
-                <section className="space-y-4 border-b border-black/10 pb-8 dark:border-white/10">
+                <section className="space-y-4 pb-8">
                   <h2 className="text-lg font-semibold tracking-[-0.02em]">
                     Contact
                   </h2>
@@ -577,7 +631,7 @@ export function CheckoutForm() {
                   </div>
                 </section>
 
-                <section className="space-y-4 border-b border-black/10 pb-8 dark:border-white/10">
+                <section className="space-y-4 pb-8">
                   <h2 className="text-lg font-semibold tracking-[-0.02em]">
                     Main driver
                   </h2>
@@ -635,7 +689,7 @@ export function CheckoutForm() {
                   </div>
                 </section>
 
-                <section className="space-y-4 border-b border-black/10 pb-8 dark:border-white/10">
+                <section className="space-y-4 pb-8">
                   <div>
                     <h2 className="text-lg font-semibold tracking-[-0.02em]">
                       Flight / arrival{" "}
@@ -675,7 +729,7 @@ export function CheckoutForm() {
                   </div>
                 </section>
 
-                <section className="space-y-4 border-b border-black/10 pb-8 dark:border-white/10">
+                <section className="space-y-4 pb-8">
                   <h2 className="text-lg font-semibold tracking-[-0.02em]">
                     Extras
                   </h2>
@@ -687,16 +741,14 @@ export function CheckoutForm() {
                           <button
                             type="button"
                             onClick={() => toggleExtra(extra.id)}
-                            className={cn(
-                              "flex w-full items-start gap-3 rounded-[10px] border px-4 py-3 text-left transition",
+                            className={cn("flex w-full items-start gap-3 rounded-[10px] border px-4 py-3 text-left transition",
                               on
                                 ? "border-black bg-black/[0.03] dark:border-white dark:bg-white/[0.04]"
                                 : "border-black/12 hover:border-black/30 dark:border-white/12 dark:hover:border-white/30",
                             )}
                           >
                             <span
-                              className={cn(
-                                "mt-0.5 flex size-5 items-center justify-center rounded-[4px] border",
+                              className={cn("mt-0.5 flex size-5 items-center justify-center rounded-[4px] border",
                                 on
                                   ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
                                   : "border-black/25 dark:border-white/25",
@@ -722,7 +774,7 @@ export function CheckoutForm() {
                   </ul>
                 </section>
 
-                <section className="space-y-4 border-b border-black/10 pb-8 dark:border-white/10">
+                <section className="space-y-4 pb-8">
                   <h2 className="text-lg font-semibold tracking-[-0.02em]">
                     Payment method
                   </h2>
@@ -732,8 +784,7 @@ export function CheckoutForm() {
                   </p>
                   <div className="space-y-3">
                     <label
-                      className={cn(
-                        "flex cursor-pointer gap-3 rounded-[10px] border px-4 py-3",
+                      className={cn("flex cursor-pointer gap-3 rounded-[10px] border px-4 py-3",
                         paymentMode === "deposit_online"
                           ? "border-black dark:border-white"
                           : "border-black/12 dark:border-white/12",
@@ -758,8 +809,7 @@ export function CheckoutForm() {
                       </span>
                     </label>
                     <label
-                      className={cn(
-                        "flex cursor-pointer gap-3 rounded-[10px] border px-4 py-3",
+                      className={cn("flex cursor-pointer gap-3 rounded-[10px] border px-4 py-3",
                         paymentMode === "pay_at_agency"
                           ? "border-black dark:border-white"
                           : "border-black/12 dark:border-white/12",
@@ -787,7 +837,7 @@ export function CheckoutForm() {
                   <h2 className="text-lg font-semibold tracking-[-0.02em]">
                     Terms
                   </h2>
-                  <div className="rounded-[10px] border border-black/10 px-4 py-3 text-sm leading-relaxed text-black/60 dark:border-white/10 dark:text-white/60">
+                  <div className="rounded-[10px] border border-black/10 px-4 py-3 text-sm leading-relaxed text-black/60 dark:text-white/60">
                     <p className="font-medium text-black dark:text-white">
                       Cancellation summary
                     </p>
@@ -1031,7 +1081,7 @@ export function CheckoutForm() {
         </div>
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white/95 px-4 py-3 backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/95 lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 bg-white/95 px-4 py-3 backdrop-blur-md dark:bg-zinc-900/95 lg:hidden">
         <div className="mx-auto flex max-w-7xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-black/40 dark:text-white/40">

@@ -75,7 +75,7 @@ export function OfferCard({ offer, days, tripQuery }: OfferCardProps) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-b border-black/10 p-4 dark:border-white/10 sm:p-5 lg:border-b-0 lg:border-r">
+        <div className="flex flex-col gap-3 p-4 sm:p-5 lg:border-b-0 lg:border-r">
           <div>
             <h3 className="text-lg font-semibold tracking-[-0.02em] text-black dark:text-white">
               {offer.modelName}
@@ -195,7 +195,7 @@ export function OfferCardSkeleton() {
     <div className="overflow-hidden rounded-[14px] border border-black/10 dark:border-white/10">
       <div className="grid animate-pulse gap-0 lg:grid-cols-[240px_minmax(0,1fr)_200px]">
         <div className="aspect-[16/11] bg-zinc-200 dark:bg-zinc-800 lg:aspect-auto lg:min-h-[200px]" />
-        <div className="space-y-3 border-b border-black/10 p-5 dark:border-white/10 lg:border-b-0 lg:border-r">
+        <div className="space-y-3 p-5 lg:border-b-0 lg:border-r">
           <div className="h-6 w-48 rounded bg-zinc-200 dark:bg-zinc-800" />
           <div className="h-4 w-32 rounded bg-zinc-200 dark:bg-zinc-800" />
           <div className="flex gap-3">

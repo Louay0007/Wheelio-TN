@@ -2,7 +2,12 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowUpRight } from "lucide-react"
 import { PageHero, PageShell } from "@/components/page-shell"
-import { GUIDES } from "@/lib/guides"
+import {
+  guideArticleSchema,
+  parseStructuredContent,
+} from "@/lib/contracts/content"
+import { getRequestLocale } from "@/lib/i18n/server"
+import { listTypedContent } from "@/server/modules/reviews-content/application/get-typed-content"
 
 export const metadata: Metadata = {
   title: "Guides | Wheelio TN",
@@ -10,7 +15,17 @@ export const metadata: Metadata = {
     "Practical guides for renting a car in Tunisia: documents, airport pickup, deposits, manuals vs automatics, and summer tips.",
 }
 
-export default function GuidesIndexPage() {
+type PageProps = {
+  searchParams: Promise<{ locale?: string }>
+}
+
+export default async function GuidesIndexPage({ searchParams }: PageProps) {
+  const locale = await getRequestLocale((await searchParams).locale)
+  const content = await listTypedContent("guide", locale)
+  const guides = content.map((item) =>
+    parseStructuredContent(item, guideArticleSchema),
+  )
+
   return (
     <PageShell>
       <PageHero
@@ -21,10 +36,10 @@ export default function GuidesIndexPage() {
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
         <ul className="grid gap-4 sm:grid-cols-2">
-          {GUIDES.map((guide) => (
+          {guides.map((guide) => (
             <li key={guide.slug}>
               <Link
-                href={`/guides/${guide.slug}`}
+                href={`/guides/${guide.slug}?locale=${locale}`}
                 className="group flex h-full flex-col rounded-[8px] border border-black/10 p-6 transition hover:border-black/25 dark:border-white/10 dark:hover:border-white/25"
               >
                 <p className="text-xs text-black/45 dark:text-white/45">

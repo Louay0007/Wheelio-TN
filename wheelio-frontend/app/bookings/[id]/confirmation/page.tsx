@@ -1,12 +1,8 @@
 import Image from "next/image"
 import Link from "next/link"
 import type { Metadata } from "next"
-import {
-  CalendarPlus,
-  Check,
-  Mail,
-  MessageCircle,
-} from "lucide-react"
+import { Check, Mail, MessageCircle, Ticket } from "lucide-react"
+import { AddToCalendarMenu } from "@/components/bookings/add-to-calendar-menu"
 import { ContractDownloads } from "@/components/checkout/contract-downloads"
 import { PageShell } from "@/components/page-shell"
 import { getDemoBooking, statusLabel } from "@/lib/bookings"
@@ -75,8 +71,7 @@ export default async function ConfirmationPage({
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <span
-              className={cn(
-                "rounded-[6px] border px-2.5 py-1 text-xs font-semibold",
+              className={cn("rounded-[6px] border px-2.5 py-1 text-xs font-semibold",
                 booking.status === "confirmed"
                   ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
                   : "border-black/20 dark:border-white/20",
@@ -101,7 +96,7 @@ export default async function ConfirmationPage({
         </div>
 
         {offer ? (
-          <section className="mt-10 flex gap-4 border-b border-black/10 pb-8 dark:border-white/10">
+          <section className="mt-10 flex gap-4 pb-8 dark:border-white/10">
             <div className="relative size-20 shrink-0 overflow-hidden rounded-[10px]">
               <Image
                 src={offer.image}
@@ -136,7 +131,7 @@ export default async function ConfirmationPage({
           </section>
         ) : null}
 
-        <section className="border-b border-black/10 py-8 dark:border-white/10">
+        <section className="py-8 dark:border-white/10">
           <h2 className="text-lg font-semibold">What to bring</h2>
           <ul className="mt-4 space-y-2.5">
             {(offer?.documents ?? [
@@ -153,13 +148,16 @@ export default async function ConfirmationPage({
           </ul>
         </section>
 
-        <section className="border-b border-black/10 py-8 dark:border-white/10">
+        <section className="py-8 dark:border-white/10">
           <h2 className="text-lg font-semibold">Pickup</h2>
           <p className="mt-2 text-sm leading-relaxed text-black/60 dark:text-white/60">
             {offer?.pickupMethodNote ?? "See your voucher for desk instructions."}
           </p>
           <p className="mt-2 text-sm font-medium">
-            {offer?.mapLabel ?? "Location shared after confirmation"}
+            {booking.pickupLabel} · {booking.pickupLocation}
+          </p>
+          <p className="mt-1 text-sm text-black/55 dark:text-white/55">
+            Return {booking.returnLabel}
           </p>
           {isPendingAgency ? (
             <p className="mt-3 rounded-[8px] border border-black/15 px-3 py-2 text-sm dark:border-white/15">
@@ -169,7 +167,7 @@ export default async function ConfirmationPage({
           ) : null}
         </section>
 
-        <section className="border-b border-black/10 py-8 dark:border-white/10">
+        <section className="py-8 dark:border-white/10">
           <ContractDownloads
             bookingId={booking.id}
             contractId={contractId}
@@ -182,39 +180,55 @@ export default async function ConfirmationPage({
           ) : null}
         </section>
 
-        <section className="flex flex-col gap-3 py-8 sm:flex-row sm:flex-wrap">
+        <section className="flex flex-col gap-3 py-8 sm:flex-row sm:flex-wrap sm:items-center">
           <Link
             href={`/bookings/${booking.id}`}
             className="inline-flex h-11 items-center justify-center rounded-[8px] bg-black px-5 text-sm font-semibold text-white dark:bg-white dark:text-black"
           >
             Manage booking
           </Link>
+          <Link
+            href={`/bookings/${booking.id}/voucher`}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-[8px] border border-black/20 px-5 text-sm font-semibold dark:border-white/20"
+          >
+            <Ticket className="size-4" />
+            Open voucher
+          </Link>
+          {offer ? (
+            <AddToCalendarMenu
+              booking={booking}
+              offer={offer}
+              triggerClassName="h-11 px-5"
+            />
+          ) : null}
+          <Link
+            href={`/bookings/${booking.id}/schedule`}
+            className="inline-flex h-11 items-center justify-center rounded-[8px] border border-black/20 px-5 text-sm font-semibold dark:border-white/20"
+          >
+            Trip schedule
+          </Link>
           <a
             href={`https://wa.me/21600000000?text=${encodeURIComponent(`Hi Wheelio, booking ${booking.reference}`)}`}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-[8px] border border-black/20 px-5 text-sm font-semibold dark:border-white/20"
           >
             <MessageCircle className="size-4" />
-            WhatsApp support
+            WhatsApp
           </a>
           <a
             href="mailto:support@wheelio.tn"
             className="inline-flex h-11 items-center justify-center gap-2 rounded-[8px] border border-black/20 px-5 text-sm font-semibold dark:border-white/20"
           >
             <Mail className="size-4" />
-            Email support
+            Email
           </a>
-          <button
-            type="button"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-[8px] border border-black/20 px-5 text-sm font-semibold dark:border-white/20"
-          >
-            <CalendarPlus className="size-4" />
-            Add to calendar
-          </button>
         </section>
 
         <p className="text-xs text-black/40 dark:text-white/40">
-          We’ll send this reference by email and SMS. Support hours follow
-          Tunisian desk time — not 24/7.
+          We’ll send this reference by email and SMS. Guest without an account?{" "}
+          <Link href="/bookings/find" className="underline underline-offset-2">
+            Find booking
+          </Link>
+          . Support follows Tunisian desk time — not 24/7.
         </p>
       </main>
     </PageShell>

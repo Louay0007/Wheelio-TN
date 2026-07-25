@@ -24,8 +24,7 @@ export function LogoCloud({ className, ...props }: LogoCloudProps) {
 
   return (
     <div
-      className={cn(
-        "group relative w-full overflow-hidden border-y border-black/10 dark:border-zinc-700/30",
+      className={cn("group relative w-full overflow-hidden border-y border-black/10 dark:border-zinc-700/30",
         className
       )}
       {...props}
@@ -52,8 +51,7 @@ type LogoCardProps = React.ComponentProps<"div"> & {
 function LogoCard({ logo, className, ...props }: LogoCardProps) {
   return (
     <div
-      className={cn(
-        "flex h-24 w-48 shrink-0 items-center justify-center border-r border-black/10 bg-white px-8 transition-colors dark:border-zinc-700/30 dark:bg-zinc-900 md:w-56",
+      className={cn("flex h-24 w-48 shrink-0 items-center justify-center border-r border-black/10 bg-white px-8 transition-colors dark:border-zinc-700/30 dark:bg-zinc-900 md:w-56",
         className
       )}
       {...props}

@@ -1,12 +1,19 @@
 import type { Metadata } from "next"
 import { LegalPage } from "@/components/legal/legal-page"
-import { CANCELLATION_DOC } from "@/lib/legal"
+import { getRequestLocale } from "@/lib/i18n/server"
+import { getLegalDocument } from "@/server/modules/reviews-content/application/get-legal-document"
 
 export const metadata: Metadata = {
   title: "Cancellation policy | Wheelio",
-  description: CANCELLATION_DOC.description,
+  description: "How cancellations and refunds work on Wheelio TN.",
 }
 
-export default function CancellationPolicyPage() {
-  return <LegalPage doc={CANCELLATION_DOC} />
+type PageProps = { searchParams: Promise<{ locale?: string }> }
+
+export default async function CancellationPolicyPage({
+  searchParams,
+}: PageProps) {
+  const locale = await getRequestLocale((await searchParams).locale)
+  const document = await getLegalDocument("cancellation-policy", locale)
+  return <LegalPage doc={document} locale={locale} />
 }

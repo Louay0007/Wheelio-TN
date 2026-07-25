@@ -139,8 +139,7 @@ export function SignaturePad({
         />
         <canvas
           ref={canvasRef}
-          className={cn(
-            "touch-none block w-full cursor-crosshair",
+          className={cn("touch-none block w-full cursor-crosshair",
             disabled && "pointer-events-none opacity-50",
           )}
           onPointerDown={onPointerDown}

@@ -1,0 +1,20 @@
+import { createRequestContext } from "@/server/core/http/request-context";
+import { jsonError, jsonOk } from "@/server/core/http/response";
+import { getPublicAgency } from "@/server/modules/fleet/application/public-catalog";
+
+export const dynamic = "force-dynamic";
+
+type Params = { params: Promise<{ slug: string }> };
+
+export async function GET(request: Request, { params }: Params) {
+  const ctx = await createRequestContext(request.headers);
+  try {
+    const { slug } = await params;
+    const url = new URL(request.url);
+    const locale = url.searchParams.get("locale") ?? ctx.locale;
+    const data = await getPublicAgency(slug, locale);
+    return jsonOk(data, ctx);
+  } catch (error) {
+    return jsonError(error, ctx);
+  }
+}

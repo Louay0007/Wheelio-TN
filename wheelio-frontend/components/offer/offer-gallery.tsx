@@ -40,8 +40,7 @@ export function OfferGallery({ images, alt }: OfferGalleryProps) {
               role="option"
               aria-selected={selected}
               onClick={() => setActive(index)}
-              className={cn(
-                "relative h-16 w-24 shrink-0 overflow-hidden rounded-[8px] border transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black dark:focus-visible:outline-white",
+              className={cn("relative h-16 w-24 shrink-0 overflow-hidden rounded-[8px] border transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black dark:focus-visible:outline-white",
                 selected
                   ? "border-black dark:border-white"
                   : "border-black/10 opacity-75 hover:opacity-100 dark:border-white/10",

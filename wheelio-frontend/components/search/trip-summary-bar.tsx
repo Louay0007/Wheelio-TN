@@ -47,7 +47,7 @@ export function TripSummaryBar({
   onModify,
 }: TripSummaryBarProps) {
   return (
-    <div className="sticky top-16 z-30 border-b border-black/10 bg-white/95 backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/95">
+    <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-md dark:bg-zinc-900/95">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45 dark:text-white/45">

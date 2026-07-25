@@ -1,12 +1,17 @@
 import type { Metadata } from "next"
 import { LegalPage } from "@/components/legal/legal-page"
-import { TERMS_DOC } from "@/lib/legal"
+import { getRequestLocale } from "@/lib/i18n/server"
+import { getLegalDocument } from "@/server/modules/reviews-content/application/get-legal-document"
 
 export const metadata: Metadata = {
   title: "Terms of service | Wheelio",
-  description: TERMS_DOC.description,
+  description: "Terms governing use of the Wheelio TN car rental marketplace.",
 }
 
-export default function TermsPage() {
-  return <LegalPage doc={TERMS_DOC} />
+type PageProps = { searchParams: Promise<{ locale?: string }> }
+
+export default async function TermsPage({ searchParams }: PageProps) {
+  const locale = await getRequestLocale((await searchParams).locale)
+  const document = await getLegalDocument("terms", locale)
+  return <LegalPage doc={document} locale={locale} />
 }

@@ -6,7 +6,7 @@ export function HelpfulFeedback() {
   const [choice, setChoice] = useState<"yes" | "no" | null>(null)
 
   return (
-    <div className="border-t border-black/10 pt-8 dark:border-white/10">
+    <div className="pt-8">
       <p className="text-sm font-medium">Was this helpful?</p>
       {choice ? (
         <p className="mt-3 text-sm text-black/55 dark:text-white/55">
