@@ -1,18 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { CalendarDays, Search } from "lucide-react"
-import { TripCard } from "@/components/bookings/trip-card"
 import { BookingStatusChip } from "@/components/bookings/booking-status-chip"
-import {
-  filterTripsByFilter,
-  listDemoTrips,
-  sortTripsByPickupDesc,
-  type TripFilter,
-} from "@/lib/bookings"
-import { fetchMyBookings } from "@/lib/gateways/checkout"
-import { useApiCheckoutSlice } from "@/lib/gateways/flags"
+import { type TripFilter } from "@/lib/bookings"
+import { useBookings } from "@/lib/query/bookings"
 import { cn } from "@/lib/utils"
 
 const FILTERS: { id: TripFilter; label: string }[] = [
@@ -78,53 +71,16 @@ function filterApiTrips(trips: ApiTrip[], filter: TripFilter, now = new Date()) 
 }
 
 export function TripsHubClient() {
-  const api = useApiCheckoutSlice()
   const [filter, setFilter] = useState<TripFilter>("upcoming")
-  const [apiTrips, setApiTrips] = useState<ApiTrip[] | null>(null)
-  const [apiError, setApiError] = useState<string | null>(null)
-  const [apiLoading, setApiLoading] = useState(api)
-
-  useEffect(() => {
-    if (!api) {
-      setApiLoading(false)
-      return
-    }
-    let cancelled = false
-    fetchMyBookings()
-      .then((rows) => {
-        if (!cancelled) {
-          setApiTrips(rows)
-          setApiError(null)
-        }
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setApiTrips([])
-          setApiError(
-            err instanceof Error ? err.message : "Sign in to see your trips",
-          )
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setApiLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [api])
-
-  const demoTrips = useMemo(() => {
-    const all = listDemoTrips()
-    return sortTripsByPickupDesc(filterTripsByFilter(all, filter))
-  }, [filter])
+  const { data: trips = [], error, isLoading } = useBookings()
 
   const apiFiltered = useMemo(() => {
-    return filterApiTrips(apiTrips ?? [], filter).sort(
+    return filterApiTrips(trips, filter).sort(
       (a, b) => new Date(b.pickupAt).getTime() - new Date(a.pickupAt).getTime(),
     )
-  }, [apiTrips, filter])
+  }, [trips, filter])
 
-  const tripCount = api ? apiFiltered.length : demoTrips.length
+  const tripCount = apiFiltered.length
   const empty = EMPTY_COPY[filter]
 
   return (
@@ -158,7 +114,7 @@ export function TripsHubClient() {
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-black/50 dark:text-white/50">
-          {apiLoading
+          {isLoading
             ? "Loading…"
             : `${tripCount} trip${tripCount === 1 ? "" : "s"}`}
         </p>
@@ -171,12 +127,12 @@ export function TripsHubClient() {
         </Link>
       </div>
 
-      {apiError ? (
+      {error ? (
         <p
           className="mt-4 text-sm text-black/55 dark:text-white/55"
           role="status"
         >
-          {apiError}
+          {error instanceof Error ? error.message : "Sign in to see your trips"}
         </p>
       ) : null}
 
@@ -195,35 +151,29 @@ export function TripsHubClient() {
 
       {tripCount > 0 ? (
         <ul className="mt-8 space-y-3" aria-label="Trip list">
-          {api
-            ? apiFiltered.map((booking) => (
-                <li key={booking.bookingId}>
-                  <Link
-                    href={`/bookings/${booking.bookingId}`}
-                    className="flex items-center justify-between gap-3 rounded-[8px] border border-black/10 p-4 transition-colors hover:border-black/25 dark:border-white/10 dark:hover:border-white/25"
-                  >
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-sm font-semibold">
-                          {booking.reference}
-                        </span>
-                        <BookingStatusChip status={booking.status as never} />
-                      </div>
-                      <p className="mt-2 text-sm text-black/60 dark:text-white/60">
-                        Pickup {new Date(booking.pickupAt).toLocaleString()}
-                      </p>
-                      <p className="mt-1 text-xs text-black/45 dark:text-white/45">
-                        Return {new Date(booking.returnAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </Link>
-                </li>
-              ))
-            : demoTrips.map((booking) => (
-                <li key={booking.id}>
-                  <TripCard booking={booking} />
-                </li>
-              ))}
+          {apiFiltered.map((booking) => (
+            <li key={booking.bookingId}>
+              <Link
+                href={`/bookings/${booking.bookingId}`}
+                className="flex items-center justify-between gap-3 rounded-[8px] border border-black/10 p-4 transition-colors hover:border-black/25 dark:border-white/10 dark:hover:border-white/25"
+              >
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-sm font-semibold">
+                      {booking.reference}
+                    </span>
+                    <BookingStatusChip status={booking.status as never} />
+                  </div>
+                  <p className="mt-2 text-sm text-black/60 dark:text-white/60">
+                    Pickup {new Date(booking.pickupAt).toLocaleString()}
+                  </p>
+                  <p className="mt-1 text-xs text-black/45 dark:text-white/45">
+                    Return {new Date(booking.returnAt).toLocaleString()}
+                  </p>
+                </div>
+              </Link>
+            </li>
+          ))}
         </ul>
       ) : (
         <div className="mt-10 rounded-[12px] border border-dashed border-black/20 px-6 py-12 text-center dark:border-white/20">
